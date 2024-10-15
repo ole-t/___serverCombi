@@ -10,8 +10,8 @@ const config_pr0002 = {
     projectNameID: projectNameID,
     commentNameCurrentProject: commentNameCurrentProject,
     // путь к папке с БД
-    localFilesAdress: '../DataBase_' + projectNameID + '/',
-    static_Adress: '../DataBase_' + projectNameID + "/staticFiles_" + projectNameID + '/',
+    localFilesAdress: '../DataBasesAllProjects/DataBase_' + projectNameID + '/',
+    static_Adress: '../DataBasesAllProjects/DataBase_' + projectNameID + "/staticFiles_" + projectNameID + '/',
     // названия файлов с данными
     mFileName___usersReestrTelegram: projectNameID + "__usersReestrTelegram.json",
 

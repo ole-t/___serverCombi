@@ -8,9 +8,9 @@ const projectNameID = "pr0001";
 const config_pr0001 = {
     projectNameID: projectNameID,
     // путь к папке с БД
-    localFilesAdress: '../DataBase_' + projectNameID + '/',
+    localFilesAdress: '../DataBasesAllProjects/DataBase_' + projectNameID + '/',
 
-    static_Adress: '../DataBase_' + projectNameID + "/staticFiles_" + projectNameID + '/',
+    static_Adress: '../DataBasesAllProjects/DataBase_' + projectNameID + "/staticFiles_" + projectNameID + '/',
     // названия файлов с данными
     mFileName___projects_DB: projectNameID + "__projectsDB.json",
     mFileName___users_Reestr: projectNameID + "__usersReestr.json",
