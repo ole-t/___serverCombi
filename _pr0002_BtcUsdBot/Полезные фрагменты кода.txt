@@ -1,0 +1,89 @@
+
+
+//-------------------------------------------------------------
+
+bot.start((ctx) => ctx.reply(
+    Markup.keyboard([
+        ['Ввести верхеюю цену'],
+        ['Ввести нижнюю цену'],
+        ['Одиночный сигнал', 'Многократный сигнал'],
+        ['Отключить уведомления'],
+    ]).extra()
+));
+
+//-------------------------------------------------------------
+
+ npm install telegraf@3.38
+
+//-------------------------------------------------------------
+
+ // заодно поставим nodemon — инструмент, который помогает разрабатывать приложения на основе node.js путем автоматического перезапуска приложения node при обнаружении изменений файлов в каталоге.
+
+npm install nodemon
+
+//-------------------------------------------------------------
+
+// для пользования WebSocket - для запроса к серверу, нужно
+// запустить команды в терминале: 
+npm install ws
+npm install --save ws 
+
+Затем:
+const WebSocket = require('ws'); // 
+
+function currentPriseAskBinance() {
+
+  let binanceSocket = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
+
+  binanceSocket.onmessage = event => {
+    currentPrice = Number(JSON.parse(event.data).p);
+    binanceSocket.close();
+  }
+
+/* 
+  try {
+    let binanceSocket = new WebSocket("wss://stream.binance.com:9443/ws/btcusdt@trade");
+    binanceSocket.onmessage = event => {
+      currentPrice = Number(JSON.parse(event.data).p);
+      binanceSocket.close();
+    }
+  }
+  catch (err) { currentPrice = -1 }
+ */
+
+}
+currentPriseAskBinance();
+//-------------------------------------------------------------
+
+По аналогии с WebSocket  существует протокол EventSource - тут запросы допускаются только в одну сторону - получать потоковую информацию от сервера
+
+// нужно запустить команду: npm install eventsource
+// и для использования EventSource вводим след код:
+var EventSource = require('eventsource')
+
+// затем код:
+
+let eventSource = new EventSource("/events/subscribe");
+
+eventSource.onmessage = function(event) {
+  console.log("Новое сообщение", event.data);
+  // этот код выведет в консоль 3 сообщения, из потока данных выше
+};
+
+// или eventSource.addEventListener('message', ...)
+
+
+
+//-------------------------------------------------------------
+
+Запуск сервера
+Для запуска сервера необходимо перейти в консоль и ввести команду:
+
+node server.js
+
+Источник с описанием: 
+https://habr.com/ru/post/546758/
+
+
+
+

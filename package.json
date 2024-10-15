@@ -1,0 +1,44 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "node server.js",
+  "type": "module",
+  "nodemonConfig": {
+    "ignore": [
+      "*.json"
+    ]
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon server.js",
+    "start": "node server.js"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcrypt": "^5.1.0",
+    "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "express": "^4.18.1",
+    "express-fileupload": "^1.4.0",
+    "express-validator": "^6.14.2",
+    "googleapis": "^118.0.0",
+    "gridfs-stream": "^1.1.1",
+    "jsonwebtoken": "^9.0.1",
+    "jwt-decode": "^3.1.2",
+    "mongo": "^0.1.0",
+    "mongoose": "^6.13.0",
+    "node-fetch": "^3.3.1",
+    "node-telegram-bot-api": "^0.63.0",
+    "nodemailer": "^6.8.0",
+    "telegraf": "^4.16.3",
+    "uuid": "^9.0.0",
+    "ws": "^8.18.0",
+    "zlib": "^1.0.5"
+  },
+  "devDependencies": {
+    "@types/node-telegram-bot-api": "^0.64.7",
+    "nodemon": "^2.0.16"
+  },
+  "description": ""
+}

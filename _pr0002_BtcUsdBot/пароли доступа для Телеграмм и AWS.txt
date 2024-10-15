@@ -1,0 +1,20 @@
+
+Телеграмм:
+@USD/BTN_Signal_bot
+1849534701:AAEUXK06JCzmab49WrgipUUlPtiPtzxKUxw
+
+AWS:
+My Account:
+olegtarasov2014@gmail.com
+
+Passw: 
+sdfLK4343453584!!
+
+jk354lkFF6776_!!!
+
+jk354lkFF6776__jkljk!!!
+
+в этой папке AWS будут данные (вход по Lamda):
+https://console.aws.amazon.com/lambda/home?region=us-east-1#/functions/BTC-USD_bot-1?tab=code
+(это после входа чтоб в аккаунт)
+
