@@ -12,9 +12,9 @@ const config_pr0001 = {
 
     static_Adress: '../DataBasesAllProjects/DataBase_' + projectNameID + "/staticFiles_" + projectNameID + '/',
     // названия файлов с данными
-    mFileName___projects_DB: projectNameID + "__projectsDB.json",
-    mFileName___users_Reestr: projectNameID + "__usersReestr.json",
-    mFileName___chat_DB: projectNameID + "__chatDB.json",
+    mFileName___projectsDB: projectNameID + "__projectsDB.json",
+    mFileName___usersReestr: projectNameID + "__usersReestr.json",
+    mFileName___chatDB: projectNameID + "__chatDB.json",
 
     // clientAdress: 'http://localhost:3000',
     // clientAdress: "litepm.com",

@@ -2,12 +2,6 @@
 // import { Chat, MessageInChat } from "./chatStructure.js";
 
 
-class BisData_Shablon_DB {
-    // corpAccount = null;
-    // corpID = null; // сделать обязательным, в конструктор
-    projects = []; // присваиваем значение, чтобы задать структуру 
-    // m_settins = null;
-}
 //-------------------------------
 
 class SingleProject {
@@ -211,7 +205,7 @@ function myRandomId() {
 
 //===============================
 
-export { BisData_Shablon_DB, SingleProject, Single_subProject, User_ResponseStack }
+export { SingleProject, Single_subProject, User_ResponseStack }
 
 // все классы помещаем в объект и экспортируем его-
 export let FOLDERS_FILES_MODELS = {

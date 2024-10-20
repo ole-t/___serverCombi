@@ -9,8 +9,8 @@ import config_serverCombi from './config_serverCombi.js';
 import config_pr0001 from './_pr0001_PlanningYourBisREACT/config_pr0001.js';
 // import { mListenerTelegramBot, MyMessegesToTelegramInfoChat, emodziListTelegram } from './global_telegramBot_forCombiServer/global_telegramBot_forCombiServer.js';
 import global_Functions_and_Servises_forAll_Projects from './global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
-import global_Data_forAllProjects from './global_Functions_and_Servises_forAll_Projects/global_Data_forAllProjects.js';
 
+// Активировать после отладки соседних проектов, перед выкладкой на Амазон
 export let connection_to_my_InfoTelegramBot;
 
 //=======================
@@ -48,20 +48,30 @@ mServer.use(
     ));
 
 
-    
+
 const PORT = 5075;
 async function mStartApp() {
 
     // подключаемся к телеграм боту для получения оповещений
-    // export let connection_to_my_InfoTelegramBot;
     try {
-        connection_to_my_InfoTelegramBot = global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.connection_to_CurrentTelegramBot(config_serverCombi.telegramAccessToken___myInfoTelegramBot);
-        // Запускаем слушатель ТелеграмБота
-        global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.listenerCurrentTelegramBot(connection_to_my_InfoTelegramBot);
+        // если соединение к телеграм боту не отключено для избежанием конфликта с моим сервером на Амазон
+        if (connection_to_my_InfoTelegramBot) {
+            try {
+                connection_to_my_InfoTelegramBot = global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.connection_to_CurrentTelegramBot(config_serverCombi.telegramAccessToken___myInfoTelegramBot);
+                // Запускаем слушатель ТелеграмБота
+
+                global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.listenerCurrentTelegramBot(connection_to_my_InfoTelegramBot);
+            } catch (error) {
+                console.log("Ошибка запуска функций Telegram");
+                console.log(error);
+            }
+        }
     } catch (error) {
-        console.log("Ошибка запуска функций Telegram");
-        console.log(error);
+        console.log(" ");
+        console.log("=== ОШИБКА ИЗ ЗА ДЕАКТИВИРОВАННОГО ПОДКЛЮЧЕНИЯ К ИНФО-БОТУ");
+        console.log(" ");
     }
+
 
     try {
         // затем запускаем сервер
@@ -71,23 +81,32 @@ async function mStartApp() {
 
             // сообщение в телеграм
             try {
-                await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                    connection_to_my_InfoTelegramBot,
-                    config_serverCombi.adminTelegramAccount_ID_for_information,
-                    " ___serverCombi", // Название проекта
-                    "Cервер перезапущен", // текст сообщения
-                    config_serverCombi.emodziListTelegram_currentProject.defaul_currentProjectEmodzi //емодзи из переменной, из списка 
-                );
-                await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                    connection_to_my_InfoTelegramBot,
-                    config_serverCombi.adminTelegramAccount_ID_for_information,
-                    "", // Название проекта
-                    "Это пример моего уведомления", // текст сообщения
-                    null // emodziListTelegram.emodzi_001     емодзи из переменной, из списка
-                )
+                // если соединение к телеграм боту не отключено для избежанием конфликта с моим сервером на Амазон
+                if (connection_to_my_InfoTelegramBot) {
+                    try {
+                        await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
+                            connection_to_my_InfoTelegramBot,
+                            config_serverCombi.adminTelegramAccount_ID_for_information,
+                            " ___serverCombi", // Название проекта
+                            "Cервер перезапущен", // текст сообщения
+                            config_serverCombi.emodziListTelegram_currentProject.defaul_currentProjectEmodzi //емодзи из переменной, из списка 
+                        );
+                        await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
+                            connection_to_my_InfoTelegramBot,
+                            config_serverCombi.adminTelegramAccount_ID_for_information,
+                            "", // Название проекта
+                            "Это пример моего уведомления", // текст сообщения
+                            null // emodziListTelegram.emodzi_001     емодзи из переменной, из списка
+                        )
+                    } catch (error) {
+                        console.log("Ошибка отправки сообщения Telegram");
+                        console.log(error);
+                    }
+                }
             } catch (error) {
-                console.log("Ошибка отправки сообщения Telegram");
-                console.log(error);
+                console.log(" ");
+                console.log("=== ОШИБКА ИЗ ЗА ДЕАКТИВИРОВАННОГО ПОДКЛЮЧЕНИЯ К ИНФО-БОТУ");
+                console.log(" ");
             }
         });
     }

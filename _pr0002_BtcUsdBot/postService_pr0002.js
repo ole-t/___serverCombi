@@ -1,9 +1,4 @@
 
-//  Продолжить просмотр ролика с 6 мин
-//  https://www.youtube.com/watch?v=slcqnHIFrj8&t=410s
-// Web app TELEGRAM Бот на node js и React. Интернет магазин и форма обратной связи в телеграмм боте
-// https://www.youtube.com/watch?v=MzO-0IYkZMU
-
 import WebSocket from 'ws';
 import config_pr0002 from './config_pr0002.js';
 import global_Functions_and_Servises_forAll_Projects from '../global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
@@ -121,19 +116,70 @@ await binanceConnection();
 await first_LoadData_pr0002();
 
 
-// Удалить - пробное сообщение юзеру
+// Удалить - рассылка приглашения старым клиентам 
 /* 
+const oldClients = [
+    1297843164
+    , 5035086715
+    , 875852069
+    , 5290947571
+    , 1898218659
+    , 317117744
+    , 1277101774
+    , 437724423
+    , 5201103559
+    , 745685895
+    , 690193889
+    , 1424402819
+    , 383166742
+    , 383166742
+    , 764307659
+    , 1878535308
+    , 754689027
+    , 1052089860
+    , 5009718863
+    , 5081856280
+    , 1958439324
+    , 1176358305
+    , 1072135201
+    , 1011105903
+    , 1225712106
+    , 1250539544
+    , 299601807
+    , 1864785150
+    , 845887037
+    , 2009841126
+    , 1880013757
+    , 409148864
+    , 1022064877
+    , 843177915
+    , 1805013287
+    , 961340998
+    , 1884822634
+    , 528532548
+    , 1668193760  // это мой телеграм
+]
 setTimeout(() => {
-    global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
-        1668193760, // id пользователя
-        "", // Название проекта
-        `ЭТО РАССЫЛКА СООБЩЕНИЙ...`, // текст сообщения
-        null, //емодзи из переменной, из списка
-        keyboardUpdate(1668193760),  // это передаваемая клавиатура для телеграм-Бота
+    oldClients.forEach((item) => {
+        try {
+            global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
+                connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                item, // id пользователя
+                "", // Название проекта
+                `Keep monitoring the current $/Bitcoin exchange rate. Welcome to our service!`, // текст сообщения
+                null, //емодзи из переменной, из списка
+                keyboardUpdate(item),  // это передаваемая клавиатура для телеграм-Бота
+            )
+        } catch (error) {
+            console.log("Не удалось сделать рассылку пользователю: " + item);
+            console.log(error);
+        }
+    }
     )
+
 }, 5000);
-*/
+ */
+
 
 
 // это аналог класса, который возвращает объект нового пользователя, но без названия эеземпляра класса
@@ -289,10 +335,10 @@ async function incominCommandFromUser_service() {
         // const incoming_text = msg.text;
         const incomingButtonCommand = identification_inIncomingButtonComsnd(msg);
 
-        console.log('');
-        console.log('incomingButtonCommand: ' + incomingButtonCommand);
-        console.log('Входящее сообщение:');
-        console.log(msg);
+      //   console.log('');
+      //   console.log('incomingButtonCommand: ' + incomingButtonCommand);
+      //   console.log('Входящее сообщение:');
+      //   console.log(msg);
 
         //  console.log('');
         //  console.log('Состояние реестра:');
@@ -908,6 +954,7 @@ function getStatistic_sortActivUsers_last__1_day() {
     }
 }
 
+// ------------------------------------------------------------
 
 
 

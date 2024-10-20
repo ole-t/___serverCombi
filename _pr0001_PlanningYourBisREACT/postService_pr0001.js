@@ -11,15 +11,13 @@ import jwt from 'jsonwebtoken';
 import jwt_decode from 'jwt-decode';
 import nodemailer from 'nodemailer';
 import zlib from 'zlib'; // для сжатия данных
-
 import m_ApiErrors from './m_ApiErrors.js';
-
 import config_pr0001 from './config_pr0001.js';
-import { BisData_Shablon_DB, SingleProject, Single_subProject, User_ResponseStack, FOLDERS_FILES_MODELS } from "./dataModels.js";
+import { SingleProject, Single_subProject, User_ResponseStack, FOLDERS_FILES_MODELS } from "./dataModels.js";
 import { User_inReestr, User_AccessProjects, SubProjectEvents_inUserReestr } from "./usersReestrModels.js";
 import { Chat, MessageInChat } from "./chatStructure.js";
-
 import global_Functions_and_Servises_forAll_Projects from '../global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
+import { first_LoadData_pr0001 } from './saveAndLoadDataServise_pr0001.js'
 
 let need_SaveData = false;
 let access_SaveData = true;
@@ -30,51 +28,36 @@ let access_SaveChat = true;
 let access_SaveFalesToMongoDB = true;
 let timePreviousSave_FalesToMongoDB = 0;
 
-// Подключаемся к МонгоДБ
-const connectToMongo_pr0001 = await global_Functions_and_Servises_forAll_Projects.mongoDB_accessAndService_forAllProjects.connectToMongoDB(
-    "pr0001",
-    config_pr0001.mMongoURL_pr0001
-)
-
 // переменные сервера помещаем в объект, чтобы можно ссылаться на них в качестве указателя
-const serverVarriorsData_pr0001 = {
-    projects_DB: new BisData_Shablon_DB(),
+export const serverVarriorsDataFromBD_pr0001 = {
+    projects_DB: [],
     users_Reestr: [],
     chat_DB: [],
     listForResponse: [],
 }
-// создаем указатели на переменные
-let projects_DB = serverVarriorsData_pr0001.projects_DB;
-let users_Reestr = serverVarriorsData_pr0001.users_Reestr;
-let chat_DB = serverVarriorsData_pr0001.chat_DB;
-let listForResponse = serverVarriorsData_pr0001.listForResponse;
-
-// массив рабочих файлов
-const pr0001_workVarriorsAndFalesNames = [
-    // во вложенном массиве первое значение - название файла, во втором значении - указатель на переменную, в которую д.б. записаны данне
-    [config_pr0001.mFileName___projects_DB, projects_DB],
-    [config_pr0001.mFileName___users_Reestr, users_Reestr],
-    [config_pr0001.mFileName___chat_DB, chat_DB]
-];
 
 let mySecretKey_forAccessToken = "thisIsMySecretKey_ForAccessToken";
 let mySecretKey_forRefreshToken = "thisIsMySecretKey_ForRefreshToken";
 
 // Загружаем базы данных в проект
-for (let elem of pr0001_workVarriorsAndFalesNames) {
-    // console.log("elem= " + elem);
-    const loadData = await global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.firstLoad_oneFileData_fromLocalDiskOrMongoDB(
-        "pr0001",
-        connectToMongo_pr0001,
-        config_pr0001.localFilesAdress,
-        elem[0], // название файла
-        // elem[1], // указатель на переменную для записи в нее данных
-    );
-    if (loadData) {
-        // console.log('loadData = ИМЕЮТСЯ');
-        elem[1] = loadData;
-    }
-}
+await first_LoadData_pr0001();
+/* 
+console.log('');
+console.log('После загрузки данных pr0001:');
+console.log('');
+console.log('projects_DB= ');
+console.log(serverVarriorsDataFromBD_pr0001.projects_DB);
+*/
+
+/* 
+console.log('');
+console.log('users_Reestr= ');
+console.log(serverVarriorsDataFromBD_pr0001.users_Reestr);
+console.log('');
+console.log('listForResponse= ');
+console.log(serverVarriorsDataFromBD_pr0001.listForResponse);
+ */
+
 
 // Экспортируем данные в МонгоДБ - НЕ УДАЛЯТЬ
 /* 
@@ -89,24 +72,24 @@ for (let elem of pr0001_workVarriorsAndFalesNames) {
 }
 */
 
+/* 
 async function saveDataControl() {
     // console.log("Запуск saveDataControl");
     setTimeout(
         async () => {
             // console.log("Запуск saveDataControl");
             try {
-                saveData();
+                saveData_pr0001();
             } catch (error) {
-                // console.log("Ошибка в saveDataControl");
-                // console.log(error);
+                console.log("Ошибка в saveDataControl");
+                console.log(error);
             }
-            saveDataControl();
 
 
             // также сохраняем в Монго ДБ
             if (access_SaveFalesToMongoDB && (Date.now() - timePreviousSave_FalesToMongoDB) > 3600000) {
-               // console.log(" ");
-               // console.log("Плановое сохранение в Монго");
+                // console.log(" ");
+                // console.log("Плановое сохранение в Монго");
                 access_SaveFalesToMongoDB = false;
 
                 // Экспортируем данные в МонгоДБ
@@ -133,11 +116,14 @@ async function saveDataControl() {
                 }
             }
 
+
+            saveDataControl();
+
         }, 900000 // 15 минут
     )
 }
 saveDataControl();
-
+ */
 
 //===============================
 class postService_pr0001 {
@@ -145,9 +131,9 @@ class postService_pr0001 {
     async m_getStartPage_PS(req) {
         try {
             let full_data_from_server = {
-                projects_DB: projects_DB,
-                users_Reestr: users_Reestr,
-                chat_DB: chat_DB
+                projects_DB: serverVarriorsDataFromBD_pr0001.projects_DB,
+                users_Reestr: serverVarriorsDataFromBD_pr0001.users_Reestr,
+                chat_DB: serverVarriorsDataFromBD_pr0001.chat_DB
             }
             return full_data_from_server;
         }
@@ -159,9 +145,9 @@ class postService_pr0001 {
     async m_get_full_data_from_server_PS(req) {
         try {
             let full_data_from_server = {
-                projects_DB: projects_DB,
-                users_Reestr: users_Reestr,
-                chat_DB: chat_DB
+                projects_DB: serverVarriorsDataFromBD_pr0001.projects_DB,
+                users_Reestr: serverVarriorsDataFromBD_pr0001.users_Reestr,
+                chat_DB: serverVarriorsDataFromBD_pr0001.chat_DB
             }
             return full_data_from_server;
         }
@@ -209,12 +195,12 @@ class postService_pr0001 {
                 return null;
             }
 
-            if ((projects_DB.projects[findIndex].teamList.findIndex(item => item.user_Email == user_Email)) < 0) {
+            if ((serverVarriorsDataFromBD_pr0001.projects_DB[findIndex].teamList.findIndex(item => item.user_Email == user_Email)) < 0) {
                 //  console.log("ПОЛЬЗОВАТЕЛЬ НЕ НАЙДЕН СРЕДИ УЧАСТНИКОВ ПРОЕКТА");
                 return null;
             }
 
-            let fullDataCurrentProject = projects_DB.projects[findIndex];
+            let fullDataCurrentProject = serverVarriorsDataFromBD_pr0001.projects_DB[findIndex];
             //  console.log("fullDataCurrentProject");
             //  console.log(fullDataCurrentProject);
             return fullDataCurrentProject;
@@ -238,7 +224,7 @@ class postService_pr0001 {
             }
 
             else {
-                return chat_DB[findIndex];
+                return serverVarriorsDataFromBD_pr0001.chat_DB[findIndex];
             }
         }
         catch (error) {
@@ -260,13 +246,13 @@ class postService_pr0001 {
 
             if (findIndex != null && findIndex >= 0) {
                 // если длинна списка больше, чем указанное количество нужных записей - берем из массива нужное количество последних записей
-                if (chat_DB[findIndex].messages.length > req.body.postDataToServer.quantityLastMessages) {
-                    let needsMessages = chat_DB[findIndex].messages.slice(-req.body.postDataToServer.quantityLastMessages); // знак отрицания "-" означает извлечение данных с конца массива 
+                if (serverVarriorsDataFromBD_pr0001.chat_DB[findIndex].messages.length > req.body.postDataToServer.quantityLastMessages) {
+                    let needsMessages = serverVarriorsDataFromBD_pr0001.chat_DB[findIndex].messages.slice(-req.body.postDataToServer.quantityLastMessages); // знак отрицания "-" означает извлечение данных с конца массива 
                     returnData.messages = needsMessages;
                 }
                 // иначе, если длинна списка меньше, чем количество нужных записей - забераем все записи
                 else {
-                    returnData.messages = chat_DB[findIndex].messages;
+                    returnData.messages = serverVarriorsDataFromBD_pr0001.chat_DB[findIndex].messages;
                 }
             }
             // console.log("returnData= ");
@@ -305,13 +291,13 @@ class postService_pr0001 {
                 // если  начальный индекс подгрузки >=0 - берем из массива нужное количество предыдущих записей
                 if (beginIndex != null && beginIndex >= 0) {
                     // console.log("Отбираем нужное количество записей, beginIndex= " + beginIndex);
-                    let filterNeedsMessages = chat_DB[findIndex].messages.slice(beginIndex, currentPreviousIndex);
+                    let filterNeedsMessages = serverVarriorsDataFromBD_pr0001.chat_DB[findIndex].messages.slice(beginIndex, currentPreviousIndex);
                     returnData.messages = filterNeedsMessages;
                 }
                 // иначе, если количество  оставшихся предыдущих сообщений меньше (или равно), чем количество нужных записей - забираем все оставшиеся записи, т.е. если  начальный индекс подгрузки < 0
                 else {
                     // console.log("Забираем все оставшиеся записи... ");
-                    returnData.messages = chat_DB[findIndex].messages.slice(0, currentPreviousIndex);
+                    returnData.messages = serverVarriorsDataFromBD_pr0001.chat_DB[findIndex].messages.slice(0, currentPreviousIndex);
                 }
             }
             console.log("returnData= ");
@@ -340,15 +326,15 @@ class postService_pr0001 {
                 req.body.postDataToServer.parentCorpAccount.corpAccount_ID,
                 req.body.postDataToServer.parentCorpAccount.corpAccount_Name,
                 Date.now(),
-                projects_DB.projects.length, // не вычитаем единицу из length, т.к. это длинна списка до добавления нового проекта
+                serverVarriorsDataFromBD_pr0001.projects_DB.length, // не вычитаем единицу из length, т.к. это длинна списка до добавления нового проекта
             );
             // Добавляем в массив БД
-            projects_DB.projects.push(newAddProject);
+            serverVarriorsDataFromBD_pr0001.projects_DB.push(newAddProject);
             //  console.log("Успешно добавлено в массив БД");
         }
 
         catch (error) {
-            console.log("Ошибка m_addNewProject_PS - ошибка добавления в projects_DB:");
+            console.log("Ошибка m_addNewProject_PS - ошибка добавления в serverVarriorsDataFromBD_pr0001.projects_DB:");
             console.log(error);
             return error;
         }
@@ -362,7 +348,7 @@ class postService_pr0001 {
             return error;
         }
 
-        // добавляем в массив чатов chat_DB
+        // добавляем в массив чатов serverVarriorsDataFromBD_pr0001.chat_DB
         /* 
         try {
             add_chat_in_chatBD(
@@ -411,7 +397,7 @@ class postService_pr0001 {
                 req.body.postDataToServer.autor,
                 req.body.postDataToServer.textMessage,
                 Date.now(),
-                chat_DB[index__in_chat_DB].messages.length, //это knownIndexInReestr - от length не отнимаем единицу, поскольку это состояние длинны массива до добавления нового сообщения
+                serverVarriorsDataFromBD_pr0001.chat_DB[index__in_chat_DB].messages.length, //это knownIndexInReestr - от length не отнимаем единицу, поскольку это состояние длинны массива до добавления нового сообщения
                 req.body.postDataToServer.message_ID,
             );
 
@@ -420,7 +406,7 @@ class postService_pr0001 {
 
             try {
                 // добавляем сообщение в БД чатов
-                chat_DB[index__in_chat_DB].messages.push(newMessage);
+                serverVarriorsDataFromBD_pr0001.chat_DB[index__in_serverVarriorsDataFromBD_pr0001.chat_DB].messages.push(newMessage);
                 need_SaveChat = true;
                 need_SaveData = true;
                 saveAllDataHandle();
@@ -431,12 +417,12 @@ class postService_pr0001 {
             }
 
             // console.log("После добавления сообщения - Список сообщений= ");
-            // console.log(chat_DB[index__in_chat_DB].messages);
+            // console.log(serverVarriorsDataFromBD_pr0001.chat_DB[index__in_serverVarriorsDataFromBD_pr0001.chat_DB].messages);
 
 
             // обновляем дату обновления чата в связанном БД проекте
             let find_indexProject_in_BD = findProjectIndex_inBD(req.body.postDataToServer.project_ID);
-            projects_DB.projects[find_indexProject_in_BD].time_Update_including_Objects.time_Update_chat = newMessage.timeOfCreate
+            serverVarriorsDataFromBD_pr0001.projects_DB[find_indexProject_in_BD].time_Update_including_Objects.time_Update_chat = newMessage.timeOfCreate
 
             // оповещаем всех подписанных пользователей
             try {
@@ -485,16 +471,16 @@ class postService_pr0001 {
                 req.body.postDataToServer.subProjectSettings,
                 currentTime,
             )
-            projects_DB.projects[findIndex].subProjects.push(new_sub_Project);
+            serverVarriorsDataFromBD_pr0001.projects_DB[findIndex].subProjects.push(new_sub_Project);
 
             need_SaveData = true;
             saveAllDataHandle();
 
             // обновляем время текущих изменений в родительском проекте
-            projects_DB.projects[findIndex].time_Update_including_Objects.time_added_new_subProgects = currentTime;
+            serverVarriorsDataFromBD_pr0001.projects_DB[findIndex].time_Update_including_Objects.time_added_new_subProgects = currentTime;
 
             // в реестр пользователей для каждого члена родительского проекта команды добавляем индивидуальное время просмотра событий для нового субпроекта. 
-            let acsessTeamUsers = projects_DB.projects[findIndex].teamList;
+            let acsessTeamUsers = serverVarriorsDataFromBD_pr0001.projects_DB[findIndex].teamList;
             acsessTeamUsers.forEach(
                 (item) => {
                     console.log("forEach - item.user_Email=" + item.user_Email);
@@ -508,9 +494,9 @@ class postService_pr0001 {
             )
 
             // добавляем новый чат в БД чатов
-            chat_DB.push(new Chat(
+            serverVarriorsDataFromBD_pr0001.chat_DB.push(new Chat(
                 req.body.postDataToServer.subProject_ID,
-                chat_DB.length, // это knownIndexInReestr // не вычитаем единицу из length, т.к. это длинна массива до добавления нового проекта
+                serverVarriorsDataFromBD_pr0001.chat_DB.length, // это knownIndexInReestr // не вычитаем единицу из length, т.к. это длинна массива до добавления нового проекта
             ));
 
             // делаем рассылку пользователям
@@ -558,13 +544,13 @@ class postService_pr0001 {
                 req.body.postDataToServer.autor,
                 req.body.postDataToServer.textMessage,
                 currentTime,
-                chat_DB[index__in_chat_DB].messages.length, //это knownIndexInReestr - от length не отнимаем единицу, поскольку это состояние длинны массива до добавления нового сообщения
+                serverVarriorsDataFromBD_pr0001.chat_DB[index__in_chat_DB].messages.length, //это knownIndexInReestr - от length не отнимаем единицу, поскольку это состояние длинны массива до добавления нового сообщения
                 req.body.postDataToServer.message_ID,
             );
 
             try {
                 // добавляем сообщение в БД чатов
-                chat_DB[index__in_chat_DB].messages.push(newMessage);
+                serverVarriorsDataFromBD_pr0001.chat_DB[index__in_serverVarriorsDataFromBD_pr0001.chat_DB].messages.push(newMessage);
                 need_SaveChat = true;
                 need_SaveData = true;
             }
@@ -576,7 +562,7 @@ class postService_pr0001 {
             let find_indexProject_in_BD = findProjectIndex_inBD(req.body.postDataToServer.project_ID);
             let find_index_subProject_in_BD = find_subProject_Index_inBD(req.body.postDataToServer.project_ID, req.body.postDataToServer.subProject_ID);
 
-            projects_DB.projects[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].time_Update_including_Objects_SUBPROJECT.time_Update_chat = newMessage.timeOfCreate;
+            serverVarriorsDataFromBD_pr0001.projects_DB[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].time_Update_including_Objects_SUBPROJECT.time_Update_chat = newMessage.timeOfCreate;
 
             // для отправителя данного сообщения - обновляем время просмотра чата
             let mObject__get__OR___ADD_and_GET___object_WasReadEvents_forSubproject___BY_ID = get__OR___ADD_and_GET___object_WasReadEvents_forSubproject___BY_ID(
@@ -650,18 +636,18 @@ class postService_pr0001 {
             const dell_index = findProjectIndex_inBD(req.body.postDataToServer.project_ID);
             if (dell_index != null && dell_index >= 0) {
                 // удаляем из реестра пользователей
-                delete_UsersInReestr_forCurrentProject(req.body.postDataToServer.project_ID, projects_DB.projects[dell_index].teamList);
+                delete_UsersInReestr_forCurrentProject(req.body.postDataToServer.project_ID, serverVarriorsDataFromBD_pr0001.projects_DB[dell_index].teamList);
 
                 need_SaveData = true;
 
                 // удаляем проект из БД
-                // projects_DB.projects.splice(dell_index, 1);
+                // serverVarriorsDataFromBD_pr0001.projects_DB.splice(dell_index, 1);
                 // помечаем проект как временно удаленный
-                projects_DB.projects[dell_index].isDeletedTemp = true;
+                serverVarriorsDataFromBD_pr0001.projects_DB[dell_index].isDeletedTemp = true;
                 need_SaveData = true;
 
                 // удалить - заменить способ сохранения данных
-                mSaveUserReestr_inBD(users_Reestr);
+                mSaveUserReestr_inBD(serverVarriorsDataFromBD_pr0001.users_Reestr);
 
                 let dataFromServer = {
                     resEndPoint: "wasDeleted_one_Project",
@@ -705,7 +691,7 @@ class postService_pr0001 {
 
             if (((dell_mainProj_Index != null && dell_mainProj_Index >= 0) && (dell_subProj_Index != null && dell_subProj_Index >= 0))) {
                 // удаляем суб-проект
-                projects_DB.projects[dell_mainProj_Index].subProjects.splice(dell_subProj_Index, 1);
+                serverVarriorsDataFromBD_pr0001.projects_DB[dell_mainProj_Index].subProjects.splice(dell_subProj_Index, 1);
                 need_SaveData = true;
                 // заготовка респонса
                 let dataFromServer = {
@@ -751,8 +737,8 @@ class postService_pr0001 {
 
             // обновляем в БД
             // определяем индекс верхнего проджекта в БД по ID и обновляем 
-            let projectIndexInBD = projects_DB.projects.findIndex(item => item.project_ID === proj_ID_inRequest);
-            projects_DB.projects[projectIndexInBD].teamList = newTeamForProject;
+            let projectIndexInBD = serverVarriorsDataFromBD_pr0001.projects_DB.findIndex(item => item.project_ID === proj_ID_inRequest);
+            serverVarriorsDataFromBD_pr0001.projects_DB[projectIndexInBD].teamList = newTeamForProject;
             need_SaveData = true;
 
             // обновляем в Рестре пользователей
@@ -785,10 +771,10 @@ class postService_pr0001 {
             let find_index_subProject_in_BD = find_subProject_Index_inBD(req.body.postDataToServer.project_ID, req.body.postDataToServer.subProject_ID);
 
             // обновляем данные в БД
-            projects_DB.projects[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].teamList_ofResponsible_subProject = req.body.postDataToServer.teamList_ofResponsible_subProject;
+            serverVarriorsDataFromBD_pr0001.projects_DB[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].teamList_ofResponsible_subProject = req.body.postDataToServer.teamList_ofResponsible_subProject;
             // обновляем время обновления данных в БД
             let currentTime = Date.now();
-            projects_DB.projects[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].time_Update_including_Objects_SUBPROJECT.time_Update_subProjectSettings = currentTime;
+            serverVarriorsDataFromBD_pr0001.projects_DB[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].time_Update_including_Objects_SUBPROJECT.time_Update_subProjectSettings = currentTime;
 
             // в реестре пользователей ТОЛЬКО ДЛЯ ОТПРАВИТЕЛЯ РЕСПОНСА обновляем время просмотра настроек субпроекта
             try {
@@ -845,10 +831,10 @@ class postService_pr0001 {
     //----------------------------------
     async m_dellAllProjects_PS() {
         try {
-            projects_DB = new BisData_Shablon_DB();
-            // mSaveFileDB(projects_DB);
-            await saveLocalFile(config_pr0001.mFileName_projectsDB, projects_DB);
-            return (projects_DB);
+            serverVarriorsDataFromBD_pr0001.projects_DB = [];
+            // mSaveFileDB(serverVarriorsDataFromBD_pr0001.projects_DB);
+            await saveLocalFile(config_pr0001.mFileName_projectsDB, serverVarriorsDataFromBD_pr0001.projects_DB);
+            return (serverVarriorsDataFromBD_pr0001.projects_DB);
         } catch (error) {
             return ("Ошибка из postService_pr0001: " + error);
         }
@@ -884,18 +870,18 @@ class postService_pr0001 {
         try {
 
             // добавляем нового подписчика в общий реестр и прокидываем туда КоллБек 
-            let index = listForResponse.findIndex(item => item.user_Email === userID_fromRequest);
+            let index = serverVarriorsDataFromBD_pr0001.listForResponse.findIndex(item => item.user_Email === userID_fromRequest);
             if (index != null && index >= 0) {
-                listForResponse[index].user_ResStack.push(mCallBack);
+                serverVarriorsDataFromBD_pr0001.listForResponse[index].user_ResStack.push(mCallBack);
             }
             else {
                 // создаем подписчика, вкладываем необх Колбек из реквеста и затем добавляем к общему списку
                 let newSubscriter = new User_ResponseStack(userID_fromRequest);
                 newSubscriter.user_ResStack.push(mCallBack);
-                listForResponse.push(newSubscriter);
+                serverVarriorsDataFromBD_pr0001.listForResponse.push(newSubscriter);
             }
-            //  console.log("listForResponse=");
-            //  console.log(listForResponse);
+            //  console.log("serverVarriorsDataFromBD_pr0001.listForResponse=");
+            //  console.log(serverVarriorsDataFromBD_pr0001.listForResponse);
         } catch (error) {
             //  console.log(error);
         }
@@ -911,7 +897,7 @@ class postService_pr0001 {
             let findProjectIdex_InCurr_Us_Reestr = findProjectIndex_InCurrentUserReestr(findUserIndex, req.body.postDataToServer.project_ID);
 
             if (findProjectIdex_InCurr_Us_Reestr != null && findProjectIdex_InCurr_Us_Reestr >= 0) {
-                users_Reestr[findUserIndex].accessProjects[findProjectIdex_InCurr_Us_Reestr].time_individual_wasReadEvents.time_wasReadChat = req.body.postDataToServer.time_wasReadChat;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].accessProjects[findProjectIdex_InCurr_Us_Reestr].time_individual_wasReadEvents.time_wasReadChat = req.body.postDataToServer.time_wasReadChat;
 
                 need_SaveData = true;
             }
@@ -933,7 +919,7 @@ class postService_pr0001 {
             let findProjectIdex_InCurr_Us_Reestr = findProjectIndex_InCurrentUserReestr(findUserIndex, req.body.postDataToServer.project_ID);
 
             if (findProjectIdex_InCurr_Us_Reestr != null && findProjectIdex_InCurr_Us_Reestr >= 0) {
-                users_Reestr[findUserIndex].accessProjects[findProjectIdex_InCurr_Us_Reestr].time_individual_wasReadEvents.time_wasReadProjectSettings = req.body.postDataToServer.time_wasReadProjectSettings;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].accessProjects[findProjectIdex_InCurr_Us_Reestr].time_individual_wasReadEvents.time_wasReadProjectSettings = req.body.postDataToServer.time_wasReadProjectSettings;
 
                 need_SaveData = true;
             }
@@ -999,13 +985,13 @@ class postService_pr0001 {
             let find_index_subProject_in_BD = find_subProject_Index_inBD(req.body.postDataToServer.project_ID, req.body.postDataToServer.subProject_ID);
 
             // обновляем данные в БД
-            projects_DB.projects[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].subProjectSettings = req.body.postDataToServer.subProjectSettings;
+            serverVarriorsDataFromBD_pr0001.projects_DB[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].subProjectSettings = req.body.postDataToServer.subProjectSettings;
             // console.log("newSettings_forSubproject= ");
-            // console.log(projects_DB.projects[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].subProjectSettings = req.body.postDataToServer.newSettings_forSubproject);
+            // console.log(serverVarriorsDataFromBD_pr0001.projects_DB[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].subProjectSettings = req.body.postDataToServer.newSettings_forSubproject);
 
             // обновляем время обновления данных в БД
             let currentTime = Date.now();
-            projects_DB.projects[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].time_Update_including_Objects_SUBPROJECT.time_Update_subProjectSettings = currentTime;
+            serverVarriorsDataFromBD_pr0001.projects_DB[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].time_Update_including_Objects_SUBPROJECT.time_Update_subProjectSettings = currentTime;
 
             // в реестре пользователей ТОЛЬКО ДЛЯ ОТПРАВИТЕЛЯ РЕСПОНСА обновляем время просмотра настроек субпроекта
             try {
@@ -1064,7 +1050,7 @@ class postService_pr0001 {
         try {
             let findUserIndex = findUser_Index_inReestr(req.body.postDataToServer.admin_ID);
             if (findUserIndex != null && findUserIndex >= 0) {
-                users_Reestr[findUserIndex].contactList.push({
+                serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].contactList.push({
                     user_Email: req.body.postDataToServer.addUser_eMail,
                     user_Group: req.body.postDataToServer.user_Group,
                     comments: req.body.postDataToServer.comments,
@@ -1096,7 +1082,7 @@ class postService_pr0001 {
             if (findUserIndex >= 0) {
                 if (deleteList && deleteList.length > 0) {
                     // получаем список СОБСТВЕННЫХ проектов для данного Админа
-                    let projectsListAdmin = users_Reestr[findUserIndex].accessProjects.filter(item => item.defaultAdminForThisProject === req.body.postDataToServer.user_Email);
+                    let projectsListAdmin = serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].accessProjects.filter(item => item.defaultAdminForThisProject === req.body.postDataToServer.user_Email);
 
                     // console.log("projectsListAdmin= ");
                     // console.log(projectsListAdmin);
@@ -1108,7 +1094,7 @@ class postService_pr0001 {
                         if (findIndexDeleteUser != null && findIndexDeleteUser >= 0) {
                             projectsListAdmin.forEach(item_AdminList => {
                                 // удаляем из доступных юзеру проектов указанный проект
-                                users_Reestr[findIndexDeleteUser].accessProjects = users_Reestr[findIndexDeleteUser].accessProjects.filter(item => {
+                                serverVarriorsDataFromBD_pr0001.users_Reestr[findIndexDeleteUser].accessProjects = serverVarriorsDataFromBD_pr0001.users_Reestr[findIndexDeleteUser].accessProjects.filter(item => {
                                     // console.log("item.project_ID=" + item.project_ID + ", item_AdminList.project_ID=" + item_AdminList.project_ID + "  Ретерним=" + (item.project_ID != item_AdminList.project_ID));
                                     if (item.project_ID != item_AdminList.project_ID) {
                                         return true;
@@ -1124,7 +1110,7 @@ class postService_pr0001 {
                         if (findProjectIndex != null && findProjectIndex >= 0) {
                             // для каждой записи из deleteList - методом filter удаляем из каждого проекта
                             deleteList.forEach((item_dellList) => {
-                                projects_DB.projects[findProjectIndex].teamList = projects_DB.projects[findProjectIndex].teamList.filter(item_teamList => {
+                                serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].teamList = serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].teamList.filter(item_teamList => {
                                     // console.log("item_teamList.user_Email=" + item_teamList.user_Email + ", item_dellList.user_Email=" + item_dellList.user_Email + "  Ретерним=" + (item_teamList.user_Email != item_dellList.user_Email))
                                     if (item_teamList.user_Email != item_dellList.user_Email) {
                                         return true;
@@ -1136,14 +1122,14 @@ class postService_pr0001 {
 
                     // 3. Далее удаляем каждого юзера из контакт-листа Админа
                     deleteList.forEach((item_dellList) => {
-                        users_Reestr[findUserIndex].contactList = users_Reestr[findUserIndex].contactList.filter(item_contactList => item_contactList.user_Email != item_dellList.user_Email)
+                        serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].contactList = serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].contactList.filter(item_contactList => item_contactList.user_Email != item_dellList.user_Email)
                     })
 
                     need_SaveData = true;
                 }
 
                 let dataFromServer = {
-                    newContactListFromServer: users_Reestr[findUserIndex].contactList,
+                    newContactListFromServer: serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].contactList,
                 }
                 console.log("dataFromServer= ");
                 console.log(dataFromServer);
@@ -1170,7 +1156,7 @@ class postService_pr0001 {
             if (findUserIndex != null && findUserIndex >= 0) {
                 if (deleteList && deleteList.length > 0) {
                     // получаем список СОБСТВЕННЫХ проектов для данного Админа
-                    let projectsListAdmin = users_Reestr[findUserIndex].accessProjects.filter(item => item.defaultAdminForThisProject === req.body.postDataToServer.admin_ID)
+                    let projectsListAdmin = serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].accessProjects.filter(item => item.defaultAdminForThisProject === req.body.postDataToServer.admin_ID)
 
                     // 1. Для удаляемых юзеров - в их списках доступных проектов удаляем проекты, из которых они исключены
                     deleteList.forEach((item_dellUser) => {
@@ -1179,7 +1165,7 @@ class postService_pr0001 {
                         if (findIndexDeleteUser != null && findIndexDeleteUser >= 0) {
                             projectsListAdmin.forEach(item_AdminList => {
                                 // удаляем из доступных юзеру проектов указанный проект
-                                users_Reestr[findIndexDeleteUser].accessProjects = users_Reestr[findIndexDeleteUser].accessProjects.filter(item => {
+                                serverVarriorsDataFromBD_pr0001.users_Reestr[findIndexDeleteUser].accessProjects = serverVarriorsDataFromBD_pr0001.users_Reestr[findIndexDeleteUser].accessProjects.filter(item => {
                                     // console.log("item.project_ID=" + item.project_ID + ", item_AdminList.project_ID=" + item_AdminList.project_ID + "  Ретерним=" + (item.project_ID != item_AdminList.project_ID));
                                     if (item.project_ID != item_AdminList.project_ID) {
                                         return true;
@@ -1195,7 +1181,7 @@ class postService_pr0001 {
                         if (findProjectIndex != null && findProjectIndex >= 0) {
                             // для каждой записи из deleteList - методом filter удаляем из каждого проекта
                             deleteList.forEach((item_dellList) => {
-                                projects_DB.projects[findProjectIndex].teamList = projects_DB.projects[findProjectIndex].teamList.filter(item_teamList => {
+                                serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].teamList = serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].teamList.filter(item_teamList => {
                                     // console.log("item_teamList.user_Email=" + item_teamList.user_Email + ", item_dellList.user_Email=" + item_dellList.user_Email + "  Ретерним=" + (item_teamList.user_Email != item_dellList.user_Email))
                                     if (item_teamList.user_Email != item_dellList.user_Email) {
                                         return true;
@@ -1208,12 +1194,12 @@ class postService_pr0001 {
 
                 // 3. Далее устанавливаем новый переданный контакт-лист для админа
                 if (req.body.postDataToServer.newContactList) {
-                    users_Reestr[findUserIndex].contactList = req.body.postDataToServer.newContactList
+                    serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].contactList = req.body.postDataToServer.newContactList
                 }
                 need_SaveData = true;
 
                 let dataFromServer = {
-                    newContactListFromServer: users_Reestr[findUserIndex].contactList,
+                    newContactListFromServer: serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].contactList,
                 }
 
                 res.status(200).json(dataFromServer);
@@ -1235,13 +1221,13 @@ class postService_pr0001 {
             let find_indexProject_in_BD = findProjectIndex_inBD(req.body.postDataToServer.project_ID);
 
             // обновляем данные в БД
-            projects_DB.projects[find_indexProject_in_BD].projectSettings = req.body.postDataToServer.projectSettings;
+            serverVarriorsDataFromBD_pr0001.projects_DB[find_indexProject_in_BD].projectSettings = req.body.postDataToServer.projectSettings;
             // console.log("newSettings_forSubproject= ");
-            // console.log(projects_DB.projects[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].subProjectSettings = req.body.postDataToServer.newSettings_forSubproject);
+            // console.log(serverVarriorsDataFromBD_pr0001.projects_DB[find_indexProject_in_BD].subProjects[find_index_subProject_in_BD].subProjectSettings = req.body.postDataToServer.newSettings_forSubproject);
 
             // обновляем время обновления данных в БД
             let currentTime = Date.now();
-            projects_DB.projects[find_indexProject_in_BD].time_Update_including_Objects.time_Update_projectSettings = currentTime;
+            serverVarriorsDataFromBD_pr0001.projects_DB[find_indexProject_in_BD].time_Update_including_Objects.time_Update_projectSettings = currentTime;
 
             // в реестре пользователей ТОЛЬКО ДЛЯ ОТПРАВИТЕЛЯ РЕСПОНСА обновляем время просмотра настроек проекта
             try {
@@ -1297,7 +1283,7 @@ class postService_pr0001 {
             let projectIndex = findProjectIndex_inBD(req.body.postDataToServer.project_ID);
 
             if (projectIndex != null && projectIndex >= 0) {
-                dataFromServer = projects_DB.projects[projectIndex].teamList.map(item => {
+                dataFromServer = serverVarriorsDataFromBD_pr0001.projects_DB[projectIndex].teamList.map(item => {
                     return {
                         user_Email: item.user_Email,
                         lastOnlineTime: getOnlineTimeCurrentUser(item.user_Email)
@@ -1323,7 +1309,7 @@ class postService_pr0001 {
             let dataFromServer = null;
             let finedUserIndex = findUser_Index_inReestr(req.body.postDataToServer.user_Email);
             if (finedUserIndex != null && finedUserIndex >= 0) {
-                users_Reestr[finedUserIndex].userPublicData = req.body.postDataToServer.userPublicData;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].userPublicData = req.body.postDataToServer.userPublicData;
                 saveAllDataHandle();
                 dataFromServer = {
                     resEndPoint: "wasChanged_UserSettings",
@@ -1432,7 +1418,7 @@ class postService_pr0001 {
             // console.log(req.body);
             let finedUserIndex = findUser_Index_inReestr(req.body.postDataToServer.user_Email);
             if (finedUserIndex != null && finedUserIndex >= 0) {
-                let finedCorpAccIndex = users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts.findIndex(item => item.corpAccount_ID == req.body.postDataToServer.newCorpAccountName);
+                let finedCorpAccIndex = serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts.findIndex(item => item.corpAccount_ID == req.body.postDataToServer.newCorpAccountName);
                 if (finedCorpAccIndex != null && finedCorpAccIndex >= 0) {
                     console.log("Возвращаем ответ ");
                     return res.status(500).json("Error - Dublicate CorpAcc name");
@@ -1447,7 +1433,7 @@ class postService_pr0001 {
                         defaultAdminForThisProject: req.body.postDataToServer.defaultAdminForThisProject,
                     }
 
-                    users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts.push(newCorpAccount);
+                    serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts.push(newCorpAccount);
                     saveAllDataHandle();
 
                     let dataFromServer = {
@@ -1479,7 +1465,7 @@ class postService_pr0001 {
 
             if (finedUserIndex != null && finedUserIndex >= 0) {
                 // получаем список проектов данного Админа
-                let projectsListCurrentUser = users_Reestr[finedUserIndex].
+                let projectsListCurrentUser = serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].
                     accessProjects.filter(
                         // item => item.defaultAdminForThisProject === req.body.postDataToServer.admin_ID
                         item => item.defaultAdminForThisProject === req.body.postDataToServer.corpAccount.defaultAdmin_ID__forThisCorpAccount
@@ -1504,13 +1490,13 @@ class postService_pr0001 {
                             if (finedProjectIndex != null && finedProjectIndex >= 0) {
                                 // и далее проверяем - совпадает ли роодительский корп аккаунт каждого найденного проекта с тем корп аккаунтом, который подлежит удалению
                                 if (
-                                    projects_DB.projects[finedProjectIndex].parentCorpAccount_ID == req.body.postDataToServer.corpAccount.corpAccount_ID
+                                    serverVarriorsDataFromBD_pr0001.projects_DB[finedProjectIndex].parentCorpAccount_ID == req.body.postDataToServer.corpAccount.corpAccount_ID
                                 ) {
                                     // console.log("Переименовываем parentCorpAccount_Name В ЦИКЛЕ forEach");
                                     // console.log("Проект до переименовывания корп аккаунта:");
                                     // console.log(item);
 
-                                    projects_DB.projects[finedProjectIndex].parentCorpAccount_Name = req.body.postDataToServer.newRenamed_corpAccount_Name;
+                                    serverVarriorsDataFromBD_pr0001.projects_DB[finedProjectIndex].parentCorpAccount_Name = req.body.postDataToServer.newRenamed_corpAccount_Name;
 
                                     // console.log("Проект ПОСЛЕ переименовывания корп аккаунта:");
                                     // console.log(item);
@@ -1524,22 +1510,22 @@ class postService_pr0001 {
 
                 try {
                     // затем переименовываем корп аккаунт в реестре клиента
-                    let finedCorpAccIndex = users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts.findIndex(item => item.corpAccount_ID == req.body.postDataToServer.corpAccount.corpAccount_ID);
+                    let finedCorpAccIndex = serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts.findIndex(item => item.corpAccount_ID == req.body.postDataToServer.corpAccount.corpAccount_ID);
 
                     console.log(" = = = corpAccount_ID=" + req.body.postDataToServer.corpAccount.corpAccount_ID);
                     console.log(" = = = ownCorpAccounts =");
-                    console.log(users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts);
+                    console.log(serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts);
 
 
                     console.log("ПЕРЕИМЕНОВЫВАЕМ finedCorpAccIndex=" + finedCorpAccIndex);
 
                     if (finedCorpAccIndex != null && finedCorpAccIndex >= 0) {
-                        users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts[finedCorpAccIndex].corpAccount_Name = req.body.postDataToServer.newRenamed_corpAccount_Name;
+                        serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts[finedCorpAccIndex].corpAccount_Name = req.body.postDataToServer.newRenamed_corpAccount_Name;
                     }
 
                     dataFromServer = {
                         resEndPoint: "was_renamed_corpAccount",
-                        renamed_corpAccount: users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts[finedCorpAccIndex],
+                        renamed_corpAccount: serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts[finedCorpAccIndex],
                     }
 
                     saveAllDataHandle();
@@ -1569,7 +1555,7 @@ class postService_pr0001 {
 
             if (finedUserIndex != null && finedUserIndex >= 0) {
                 // получаем список проектов данного Админа
-                let projectsListCurrentUser = users_Reestr[finedUserIndex].
+                let projectsListCurrentUser = serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].
                     accessProjects.filter(
                         item => item.defaultAdminForThisProject === req.body.postDataToServer.admin_ID
                     );
@@ -1586,7 +1572,7 @@ class postService_pr0001 {
                             if (finedProjectIndex != null && finedProjectIndex >= 0) {
                                 // и далее проверяем - совпадает ли роодительский корп аккаунт каждого найденного проекта с тем корп аккаунтом, который подлежит удалению
                                 if (
-                                    projects_DB.projects[finedProjectIndex].parentCorpAccount_ID == req.body.postDataToServer.corpAccount.corpAccount_ID
+                                    serverVarriorsDataFromBD_pr0001.projects_DB[finedProjectIndex].parentCorpAccount_ID == req.body.postDataToServer.corpAccount.corpAccount_ID
                                 ) {
                                     console.log("УДАЛЯЕМ ПРОЕКТ В ЦИКЛЕ forEach");
                                     delete_oneProjectFromBD(
@@ -1599,12 +1585,12 @@ class postService_pr0001 {
 
                     try {
                         // затем удаляем корп аккаунт из реестра клиента
-                        let finedCorpAccIndex = users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts.findIndex(item => item.corpAccount_ID == req.body.postDataToServer.corpAccount.corpAccount_ID);
+                        let finedCorpAccIndex = serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts.findIndex(item => item.corpAccount_ID == req.body.postDataToServer.corpAccount.corpAccount_ID);
 
                         console.log("finedCorpAccIndex=" + finedCorpAccIndex);
 
                         if (finedCorpAccIndex != null && finedCorpAccIndex >= 0) {
-                            users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts.splice(finedCorpAccIndex, 1);
+                            serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].corpAccounts.ownCorpAccounts.splice(finedCorpAccIndex, 1);
                         }
 
                     } catch (error) {
@@ -1646,7 +1632,7 @@ class postService_pr0001 {
 
             if (finedUserIndex != null && finedUserIndex >= 0) {
                 // добавляем овнера в игнор-лист (если он еще не был добавлен)
-                let finedIndex_ignoredOwnerCorpAcc = users_Reestr[finedUserIndex].ignorOwnersList.findIndex(
+                let finedIndex_ignoredOwnerCorpAcc = serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].ignorOwnersList.findIndex(
                     item => item.ignorOwner_ID === req.body.postDataToServer.ignorOwner_ID
                 );
 
@@ -1654,7 +1640,7 @@ class postService_pr0001 {
 
                 if (!(finedIndex_ignoredOwnerCorpAcc != null && finedIndex_ignoredOwnerCorpAcc >= 0)) {
                     // console.log("Добавляем Юзера в Игнор ");
-                    users_Reestr[finedUserIndex].ignorOwnersList.push(
+                    serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].ignorOwnersList.push(
                         {
                             ignorOwner_ID: req.body.postDataToServer.ignorOwner_ID,
                             ignorOwner_EMAIL: req.body.postDataToServer.ignorOwner_EMAIL,
@@ -1692,7 +1678,7 @@ class postService_pr0001 {
 
             if (finedUserIndex != null && finedUserIndex >= 0) {
                 // восстанавливаем овнера - удаляем из игнор-листа
-                let finedIndex_ignoredOwnerCorpAcc = users_Reestr[finedUserIndex].ignorOwnersList.findIndex(
+                let finedIndex_ignoredOwnerCorpAcc = serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].ignorOwnersList.findIndex(
                     item => item.ignorOwner_ID === req.body.postDataToServer.ignorOwner_ID
                 );
 
@@ -1700,7 +1686,7 @@ class postService_pr0001 {
 
                 if (finedIndex_ignoredOwnerCorpAcc != null && finedIndex_ignoredOwnerCorpAcc >= 0) {
                     // console.log("Добавляем Юзера в Игнор ");
-                    users_Reestr[finedUserIndex].ignorOwnersList.splice(finedIndex_ignoredOwnerCorpAcc, 1);
+                    serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].ignorOwnersList.splice(finedIndex_ignoredOwnerCorpAcc, 1);
 
                     dataFromServer = {
                         resEndPoint: "was_restoredOwnerCorpAccount",
@@ -1732,7 +1718,7 @@ class postService_pr0001 {
             let adminIndex = findUser_Index_inReestr(req.body.postDataToServer.user_Email);
 
             if (adminIndex != null && adminIndex >= 0) {
-                dataFromServer = users_Reestr[adminIndex].contactList.map(item => {
+                dataFromServer = serverVarriorsDataFromBD_pr0001.users_Reestr[adminIndex].contactList.map(item => {
                     return {
                         user_Email: item.user_Email,
                         lastOnlineTime: getOnlineTimeCurrentUser(item.user_Email)
@@ -1761,17 +1747,17 @@ class postService_pr0001 {
 
             if (userIndex != null && userIndex >= 0) {
                 // обновляем время присутствия
-                // users_Reestr[userIndex].onlineStatus = {};
+                // serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].onlineStatus = {};
 
                 try {
                     // удалить проверку после исправления реестра
-                    if (!users_Reestr[userIndex].onlineStatus) users_Reestr[userIndex].onlineStatus = {}; // если свойства не было установлено в старых записях реестра - тогда добавили его
-                    users_Reestr[userIndex].onlineStatus.lastOnlineTime = Date.now();
+                    if (!serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].onlineStatus) serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].onlineStatus = {}; // если свойства не было установлено в старых записях реестра - тогда добавили его
+                    serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].onlineStatus.lastOnlineTime = Date.now();
                 } catch (error) {
                     console.log("Ошибка из postService_pr0001 --- m_confirmOnlineStatus_PS: " + error);
                 }
 
-                // console.log("===== onlineStatus= " + users_Reestr[userIndex].onlineStatus.lastOnlineTime);
+                // console.log("===== onlineStatus= " + serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].onlineStatus.lastOnlineTime);
 
                 need_SaveData = true;
             }
@@ -1779,7 +1765,7 @@ class postService_pr0001 {
             let dataFromServer = {
                 // eser_ID: req.body.postDataToServer.user_Email,
                 user_Email: req.headers.decodeAT_____user_Email,
-                lastOnlineTime: users_Reestr[userIndex].onlineStatus.lastOnlineTime
+                lastOnlineTime: serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].onlineStatus.lastOnlineTime
             }
 
             // console.log("dataFromServer= ");
@@ -1928,17 +1914,17 @@ class postService_pr0001 {
                 // удаляем из реестра
                 try {
                     // вносим корректировки в реестр файлов и размер занятого места на диске
-                    let finedFileIndexInFileList = projects_DB.projects[finedProjectIndexBD].attachedFiles.filesList.findIndex(item => item.file_ID == file_ID);
+                    let finedFileIndexInFileList = serverVarriorsDataFromBD_pr0001.projects_DB[finedProjectIndexBD].attachedFiles.filesList.findIndex(item => item.file_ID == file_ID);
                     console.log("finedFileIndexInFileList= " + finedFileIndexInFileList);
                     if (finedFileIndexInFileList != null && finedFileIndexInFileList >= 0) {
                         // корректируем размер занятого места на диске админа
-                        users_Reestr[finedUserIndexInReestr].tarif_plan.used_diskSpace -=
-                            projects_DB.projects[finedProjectIndexBD].attachedFiles.filesList[finedFileIndexInFileList].file_size;
+                        serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndexInReestr].tarif_plan.used_diskSpace -=
+                            serverVarriorsDataFromBD_pr0001.projects_DB[finedProjectIndexBD].attachedFiles.filesList[finedFileIndexInFileList].file_size;
                         console.log("ОТКОРРЕКТИРОВАН РАЗМЕР ДИСКА В РЕЕСТЕ");
 
                         // удаляем также шаблон файла из списка файлов проекта
                         if (finedFileIndexInFileList != null && finedFileIndexInFileList >= 0) {
-                            projects_DB.projects[finedProjectIndexBD].attachedFiles.filesList.splice(finedFileIndexInFileList, 1);
+                            serverVarriorsDataFromBD_pr0001.projects_DB[finedProjectIndexBD].attachedFiles.filesList.splice(finedFileIndexInFileList, 1);
                             console.log("УДАЛЕН шаблон файла из списка файлов проекта");
                         }
                     }
@@ -1953,7 +1939,7 @@ class postService_pr0001 {
             });
 
             let dataFromServer = {
-                newFilesList: projects_DB.projects[finedProjectIndexBD].attachedFiles.filesList
+                newFilesList: serverVarriorsDataFromBD_pr0001.projects_DB[finedProjectIndexBD].attachedFiles.filesList
             }
 
             saveAllDataHandle();
@@ -2033,7 +2019,7 @@ class postService_pr0001 {
             // в данных запроса отсутствует body, тк это ГЕТ-запрос. Поэтому извлекаем интересующие нас данные из строки запроса:
             let activationLink = req.params.link;
 
-            let finedIndex = users_Reestr.findIndex(item => item.autorisationData.activationLink === activationLink);
+            let finedIndex = serverVarriorsDataFromBD_pr0001.users_Reestr.findIndex(item => item.autorisationData.activationLink === activationLink);
             // если пользователь не найден
             if (!(finedIndex != null && finedIndex >= 0)) {
                 // throw new e("Некорректная ссылка активации");
@@ -2042,19 +2028,19 @@ class postService_pr0001 {
             // иначе, если пользователь найден
             else {
                 // ставим отметку об активации нового пользователя
-                users_Reestr[finedIndex].autorisationData.isActivatedAsseptLink = true;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[finedIndex].autorisationData.isActivatedAsseptLink = true;
                 need_SaveData = true;
 
                 // переносим токены юзера из временной папки предрегистрации в данные юзера (создаем копию, а не ссылки на объект)
-                users_Reestr[finedIndex].autorisationData.tokensDifferentGadgets =
+                serverVarriorsDataFromBD_pr0001.users_Reestr[finedIndex].autorisationData.tokensDifferentGadgets =
                     JSON.parse(
-                        JSON.stringify(users_Reestr[finedIndex].autorisationData.tokensBeforeRegistration)
+                        JSON.stringify(serverVarriorsDataFromBD_pr0001.users_Reestr[finedIndex].autorisationData.tokensBeforeRegistration)
                     );
 
                 // очищаем предварительное хранилище токенов перед регистрацией юзера
-                users_Reestr[finedIndex].autorisationData.tokensBeforeRegistration = {};
+                serverVarriorsDataFromBD_pr0001.users_Reestr[finedIndex].autorisationData.tokensBeforeRegistration = {};
                 // очищаем Линк для регистрации
-                users_Reestr[finedIndex].autorisationData.activationLink = null;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[finedIndex].autorisationData.activationLink = null;
 
 
             }
@@ -2113,8 +2099,8 @@ class postService_pr0001 {
             // console.log("req.params= ");
             // console.log(req.params);
 
-            // console.log("users_Reestr[0].autorisationData= ");
-            // console.log(users_Reestr[0].autorisationData);
+            // console.log("serverVarriorsDataFromBD_pr0001.users_Reestr[0].autorisationData= ");
+            // console.log(serverVarriorsDataFromBD_pr0001.users_Reestr[0].autorisationData);
 
             // console.log(req);
             // в данных запроса отсутствует body, тк это ГЕТ-запрос. Поэтому извлекаем интересующие нас данные из строки запроса:
@@ -2122,7 +2108,7 @@ class postService_pr0001 {
             // console.log("changeLink= ");
             // console.log(changeLink);
 
-            let finedIndex = users_Reestr.findIndex(item => item.autorisationData.changePasswordData.changePasswordActivationLink === changeLink);
+            let finedIndex = serverVarriorsDataFromBD_pr0001.users_Reestr.findIndex(item => item.autorisationData.changePasswordData.changePasswordActivationLink === changeLink);
             // console.log("finedIndex= " + finedIndex);
             // если пользователь не найден
             if (!(finedIndex != null && finedIndex >= 0)) {
@@ -2132,13 +2118,13 @@ class postService_pr0001 {
             // иначе, если пользователь найден
             else {
                 // переносим токены юзера из временной папки changePasswordData в данные юзера (создаем копию, а не ссылки на объект)
-                users_Reestr[finedIndex].autorisationData.tokensDifferentGadgets =
+                serverVarriorsDataFromBD_pr0001.users_Reestr[finedIndex].autorisationData.tokensDifferentGadgets =
                     JSON.parse(
-                        JSON.stringify(users_Reestr[finedIndex].autorisationData.changePasswordData.changePassword_newTokens)
+                        JSON.stringify(serverVarriorsDataFromBD_pr0001.users_Reestr[finedIndex].autorisationData.changePasswordData.changePassword_newTokens)
                     );
 
                 // очищаем предварительное хранилище токенов перед изменением пароля
-                users_Reestr[finedIndex].autorisationData.changePasswordData = {
+                serverVarriorsDataFromBD_pr0001.users_Reestr[finedIndex].autorisationData.changePasswordData = {
                     changePasswordHesh_awaitConfirm: null,
                     changePassword_awaitConfirm: null, //  позже удалить это поле
                     changePasswordActivationLink: null,
@@ -2228,7 +2214,7 @@ class postService_pr0001 {
                 try {
                     console.log("=========================");
                     console.log("Пробное прочтение файла - m_GoogleAuth_01_PS");
-                    // const pathNameID = 'dataBase/' + 'users_Reestr' + '.json';
+                    // const pathNameID = 'dataBase/' + 'serverVarriorsDataFromBD_pr0001.users_Reestr' + '.json';
                     const pathNameID = get_valid_adress_fileOrFolder("../DataBase/m_DB.json");
                     let data = fs.readFileSync(pathNameID, 'utf8');
                     console.log("Файл успешно прочитан - mLoadUserReestr");
@@ -2273,7 +2259,7 @@ class postService_pr0001 {
                     try {
                         let finedUserIndex = find___Or_Find_And_Add_NewUserInReestr(googleClientToken.email);
                         // добавляем в реестр данные о пользователе - копируем их из входящего токена
-                        users_Reestr[finedUserIndex].autorisationData.googleAuthData = googleClientToken;
+                        serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.googleAuthData = googleClientToken;
 
                         // Создаем токен доступа и рефреж токен для данного пользователя (с учетом активного Гаджета) 
                         let newTokens = mUserService.generateTokens({
@@ -2286,22 +2272,22 @@ class postService_pr0001 {
                         // записываем/перезаписываем токены в реестр юзера
                         try {
                             // в след строке мы создаем свойство, название которого создается динамически и соответствует идентификатору Гаджета [mGadgetProcess_ID]
-                            users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[mGadgetProcess_ID] = {
+                            serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[mGadgetProcess_ID] = {
                                 accessToken: newTokens.accessToken,
                                 refreshToken: newTokens.refreshToken,
                             };
 
-                            // console.log("users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets=");
-                            // console.log(users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets);
+                            // console.log("serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets=");
+                            // console.log(serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets);
 
                             // Отмечаем, что регистрация юзера подтверждена (это поле, которое подтверждается при других способах регистрации юзера). Это необходимо, если юзер в дальнейшем захочет логиниться с пом обычного логин/пароль
-                            if (!(users_Reestr[finedUserIndex].autorisationData.isActivatedAsseptLink)) {
-                                users_Reestr[finedUserIndex].autorisationData.isActivatedAsseptLink = true;
+                            if (!(serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.isActivatedAsseptLink)) {
+                                serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.isActivatedAsseptLink = true;
                             }
 
                             // Если раньше не было регистрации через логин/пароль, - ТОГДА ТОЛЬКО устанавливаем значение passwordHesh
-                            if (!users_Reestr[finedUserIndex].autorisationData.passwordHesh) {
-                                users_Reestr[finedUserIndex].autorisationData.passwordHesh = "wasAuthByGoogle";
+                            if (!serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.passwordHesh) {
+                                serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.passwordHesh = "wasAuthByGoogle";
                             }
 
                         }
@@ -2312,8 +2298,8 @@ class postService_pr0001 {
 
 
                         let dataFromServer = {
-                            user_Email: users_Reestr[finedUserIndex].user_Email,
-                            accessToken: users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[mGadgetProcess_ID].accessToken,
+                            user_Email: serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].user_Email,
+                            accessToken: serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[mGadgetProcess_ID].accessToken,
                         }
 
                         console.log("ОТПРАВЛЯЕМ RES из SubDialog_logIn_Form, dataFromServer=");
@@ -2413,12 +2399,12 @@ class postService_pr0001 {
         let userIndex = findUser_Index_inReestr(eMail);
         if (userIndex != null && userIndex >= 0) {
             console.log("ДО УДАЛЕНИЯ tokensDifferentGadgets= ");
-            console.log(users_Reestr[userIndex].autorisationData.tokensDifferentGadgets);
+            console.log(serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].autorisationData.tokensDifferentGadgets);
             // следующим действием ИМЕННО УДАЛЯЕМ --- а не обнуляем --- свойство объекта с ID конкретного гаджета, чтобы не засорять реестр, поскольку пользователь в будущем возможно не будет заходить с этого гаджета, а ID гаджета останется в реестре с обнуленными данными.
             // Тут к свойству объекта обращаемся в виде [mGadgetProcess_ID], поскольку это динамически созданное свойство из запроса (т.е. ключ в строковом формате) , и его переводим в строковый формат данным образом (см. тут: https://learn.javascript.ru/object)
-            delete users_Reestr[userIndex].autorisationData.tokensDifferentGadgets[mGadgetProcess_ID];
+            delete serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].autorisationData.tokensDifferentGadgets[mGadgetProcess_ID];
             console.log("tokensDifferentGadgets= ");
-            console.log(users_Reestr[userIndex].autorisationData.tokensDifferentGadgets);
+            console.log(serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].autorisationData.tokensDifferentGadgets);
 
             saveAllDataHandle();
         }
@@ -2446,11 +2432,11 @@ class postService_pr0001 {
         if (userIndex != null && userIndex >= 0) {
 
             console.log("ПЕРЕД УДАЛЕНИЕМ tokensDifferentGadgets= ");
-            console.log(users_Reestr[userIndex].autorisationData.tokensDifferentGadgets);
+            console.log(serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].autorisationData.tokensDifferentGadgets);
             // удалеим все вложенные объекты с токенами для данного пользователя
-            users_Reestr[userIndex].autorisationData.tokensDifferentGadgets = {};
+            serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].autorisationData.tokensDifferentGadgets = {};
             console.log("tokensDifferentGadgets= ");
-            console.log(users_Reestr[userIndex].autorisationData.tokensDifferentGadgets);
+            console.log(serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].autorisationData.tokensDifferentGadgets);
 
             saveAllDataHandle();
         }
@@ -2535,7 +2521,7 @@ class mUserService__constructor {
 
             console.log("candidateIndex= " + candidateIndex);
 
-            if ((candidateIndex != null && candidateIndex >= 0) && users_Reestr[candidateIndex].autorisationData.isActivatedAsseptLink === true) {
+            if ((candidateIndex != null && candidateIndex >= 0) && serverVarriorsDataFromBD_pr0001.users_Reestr[candidateIndex].autorisationData.isActivatedAsseptLink === true) {
                 console.log("ПОЛЬЗОВАТЕЛь с таким еМейлом: " + eMail + " - уже ЗАРЕГИСТРИРОВАН");
                 throw m_ApiErrors.m_BadRequest("Пользователь с таким еМейлом: " + eMail + " - уже ЗАРЕГИСТРИРОВАН");
                 // return "ПОЛЬЗОВАТЕЛь УЖЕ ЗАРЕГИСТРИРОВАНТ";
@@ -2553,19 +2539,19 @@ class mUserService__constructor {
                 if (!(candidateIndex != null && candidateIndex >= 0)) {
                     // тогда создаем пользователя в реестре
                     console.log("ДОБАВЛЯЕМ НОВОГО ПОЛЬЗОВАТЕЛЯ");
-                    users_Reestr.push(new User_inReestr(
+                    serverVarriorsDataFromBD_pr0001.users_Reestr.push(new User_inReestr(
                         myRandomId(),
                         eMail,
                         passwordHesh,
                         null, // это password - не храним его в открытом виде,
                         activationLink));
-                    candidateIndex = (users_Reestr.length) - 1;
+                    candidateIndex = (serverVarriorsDataFromBD_pr0001.users_Reestr.length) - 1;
                     // Записываем ссылку активации
-                    users_Reestr[candidateIndex].autorisationData.activationLink = activationLink;
+                    serverVarriorsDataFromBD_pr0001.users_Reestr[candidateIndex].autorisationData.activationLink = activationLink;
                 }
                 else {
                     // Иначе, если пользователь уже существует (но не активирован) - обновляем ссылку активации
-                    users_Reestr[candidateIndex].autorisationData.activationLink = activationLink;
+                    serverVarriorsDataFromBD_pr0001.users_Reestr[candidateIndex].autorisationData.activationLink = activationLink;
                 }
 
                 saveAllDataHandle();
@@ -2582,10 +2568,10 @@ class mUserService__constructor {
 
                 // сохраняем токены ВО ВРЕМЕННОМ ОБЪЕКТЕ для токеноа нового пользователя
                 // в след строке мы создаем свойство, название которого создается динамически и соответствует идентификатору Гаджета [mGadgetProcess_ID]
-                users_Reestr[candidateIndex].autorisationData.tokensBeforeRegistration[mGadgetProcess_ID] = newTokens;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[candidateIndex].autorisationData.tokensBeforeRegistration[mGadgetProcess_ID] = newTokens;
 
                 console.log("tokensBeforeRegistration=");
-                console.log(users_Reestr[candidateIndex].autorisationData.tokensBeforeRegistration);
+                console.log(serverVarriorsDataFromBD_pr0001.users_Reestr[candidateIndex].autorisationData.tokensBeforeRegistration);
 
                 // ретерним данные
                 let returnData = {
@@ -2619,11 +2605,11 @@ class mUserService__constructor {
 
             console.log("user_Index= " + user_Index);
             if (user_Index != null && user_Index >= 0) {
-                console.log("isActivatedAsseptLink= " + users_Reestr[user_Index].autorisationData.isActivatedAsseptLink);
+                console.log("isActivatedAsseptLink= " + serverVarriorsDataFromBD_pr0001.users_Reestr[user_Index].autorisationData.isActivatedAsseptLink);
             }
 
             if (!(user_Index != null && user_Index >= 0)
-                || users_Reestr[user_Index].autorisationData.isActivatedAsseptLink === false) {
+                || serverVarriorsDataFromBD_pr0001.users_Reestr[user_Index].autorisationData.isActivatedAsseptLink === false) {
                 console.log("При попытке смены пароля - ПОЛЬЗОВАТЕЛь с таким еМейлом: " + eMail + " - НЕ ЗАРЕГИСТРИРОВАН");
                 throw m_ApiErrors.m_BadRequest("При попытке смены пароля - ПОЛЬЗОВАТЕЛь с таким еМейлом: " + eMail + " - НЕ ЗАРЕГИСТРИРОВАН");
             }
@@ -2632,12 +2618,12 @@ class mUserService__constructor {
             else {
                 // хешируем пароль
                 let changePasswordHesh = await bcrypt.hash(newPassword, 3);
-                users_Reestr[user_Index].autorisationData.changePasswordData.changePasswordHesh_awaitConfirm = changePasswordHesh;
-                users_Reestr[user_Index].autorisationData.changePasswordData.changePassword_awaitConfirm = req.body.postDataToServer.newPassword;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[user_Index].autorisationData.changePasswordData.changePasswordHesh_awaitConfirm = changePasswordHesh;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[user_Index].autorisationData.changePasswordData.changePassword_awaitConfirm = req.body.postDataToServer.newPassword;
 
                 // создаем ремдомную строку для подтверждения е-мейла
                 let activationLink = uuidv4();
-                users_Reestr[user_Index].autorisationData.changePasswordData.changePasswordActivationLink = activationLink;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[user_Index].autorisationData.changePasswordData.changePasswordActivationLink = activationLink;
 
                 // Отправляем на почту нового юзера письмо с подтверждением кода регистрации
                 await this.sendMail_changePassword(eMail, activationLink);
@@ -2651,10 +2637,10 @@ class mUserService__constructor {
 
                 // сохраняем токены ВО ВРЕМЕННОМ ОБЪЕКТЕ для токеноа нового пользователя
                 // в след строке мы создаем свойство, название которого создается динамически и соответствует идентификатору Гаджета [mGadgetProcess_ID]
-                users_Reestr[user_Index].autorisationData.changePasswordData.changePassword_newTokens[mGadgetProcess_ID] = newTokens;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[user_Index].autorisationData.changePasswordData.changePassword_newTokens[mGadgetProcess_ID] = newTokens;
 
-                console.log("users_Reestr[user_Index].autorisationData= ");
-                console.log(users_Reestr[user_Index].autorisationData);
+                console.log("serverVarriorsDataFromBD_pr0001.users_Reestr[user_Index].autorisationData= ");
+                console.log(serverVarriorsDataFromBD_pr0001.users_Reestr[user_Index].autorisationData);
 
                 saveAllDataHandle();
 
@@ -2687,7 +2673,7 @@ class mUserService__constructor {
 
             if (
                 !(userIndex != null && userIndex >= 0)
-                || !users_Reestr[userIndex].autorisationData.isActivatedAsseptLink
+                || !serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].autorisationData.isActivatedAsseptLink
             ) {
                 returnData = {
                     logInResult: "logInError_userIsNotRegistered",
@@ -2700,7 +2686,7 @@ class mUserService__constructor {
             }
 
             // перед продолжением проверяем - не был ли данный пользователь зарегистрирован с пом GoogleService
-            if (users_Reestr[userIndex].autorisationData.passwordHesh == "wasAuthByGoogle") {
+            if (serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].autorisationData.passwordHesh == "wasAuthByGoogle") {
                 returnData = {
                     logInResult: "logInError_userWasAuthByGoogle",
                     user_Email: eMail,
@@ -2711,7 +2697,7 @@ class mUserService__constructor {
 
             // сравниваем захешированные пароль, переданный пользователем, и находящийся в БД в захешированном виде
             // функция bcrypt.compare сопоставляет переданный клиентом пароль с хахешированным паролем, который сохранен в реестре пользователя. И возвращает либо 'true' либо 'false'
-            let isAsseptPassword = await bcrypt.compare(password, users_Reestr[userIndex].autorisationData.passwordHesh);
+            let isAsseptPassword = await bcrypt.compare(password, serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].autorisationData.passwordHesh);
 
             if (!isAsseptPassword) {
                 returnData = {
@@ -2729,7 +2715,7 @@ class mUserService__constructor {
                 user_Email: eMail,
                 mKuiir: userIndex, // это knownUserIndexInReestr - прячем за абревиатурой, чтоб на клиенте не было видно поря
                 mGadgetProcess_ID: mGadgetProcess_ID,
-                // passwordHesh: users_Reestr[userIndex].autorisationData.passwordHesh,
+                // passwordHesh: serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].autorisationData.passwordHesh,
             });
 
             // сохраняем новый refreshToken в реестр нового пользователя. Генерируем нов токен для того, чтобы автоматически продлевать время действия Рефреш токна. Но в этом случае будет происходить выбрасывания этого же юзера из других его устройств. Впоследствии исправить - проверять, имеется ли действующий токен для данного пользователя с другого устройства, и если время его действия не истекло - тогда не перезаписывать токен, а отправлять в ответе существующий токен. Правда, в этом случае не будет продлеваться время действия рефреш-токена. В общем нужно продумать решение этой задачи.
@@ -2775,10 +2761,10 @@ class mUserService__constructor {
             }
             // если предыдущие валидации пройдены - генерируем новую пару токенов
             let mNewPayload = {
-                user_Email: users_Reestr[findUserIndex].user_Email,
+                user_Email: serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].user_Email,
                 mKuiir: findUserIndex, // это knownUserIndexInReestr - прячем за абревиатурой, чтоб на клиенте не было видно поря
                 mGadgetProcess_ID: mGadgetProcess_ID,
-                // passwordHesh: users_Reestr[findUserIndex].autorisationData.passwordHesh,
+                // passwordHesh: serverVarriorsDataFromBD_pr0001.users_Reestr[findUserIndex].autorisationData.passwordHesh,
             }
             let newUserTokens = this.generateTokens(mNewPayload);
             // сохраняем токен (только refreshToken) в реестр нового пользователя. Впоследствии исправить - проверять, имеется ли действующий токен для данного пользователя с другого устройства, и если время его действия не истекло - тогда не перезаписывать токен, а отправлять в ответе существующий токен. 
@@ -2914,7 +2900,7 @@ class mUserService__constructor {
             let finedUserIndex = findUser_Index_inReestr(user_Email);
             if (finedUserIndex != null && finedUserIndex >= 0) {
                 // в след строке мы создаем свойство, название которого создается динамически и соответствует идентификатору Гаджета [mGadgetProcess_ID]
-                users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[mGadgetProcess_ID] = {
+                serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[mGadgetProcess_ID] = {
                     accessToken: newUserTokens.accessToken,
                     refreshToken: newUserTokens.refreshToken,
                 }
@@ -2967,7 +2953,7 @@ class mFile_service_constructor {
         // добавляем запись в реестр файлов
         try {
             let findProjectIndex = findProjectIndex_inBD(project_ID);
-            projects_DB.projects[findProjectIndex].attachedFiles.filesList.push(new FOLDERS_FILES_MODELS.file_model(
+            serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].attachedFiles.filesList.push(new FOLDERS_FILES_MODELS.file_model(
                 parentAdmin_ID,
                 project_ID,
                 file_ID,
@@ -2978,7 +2964,7 @@ class mFile_service_constructor {
             ));
             console.log("Успешно добавлен в РЕЕСТР");
             console.log("Новый список файлов=");
-            console.log(projects_DB.projects[findProjectIndex].attachedFiles.filesList);
+            console.log(serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].attachedFiles.filesList);
 
         } catch (error) {
             console.log("Ошибка добавления файла в реестр: " + error);
@@ -2989,9 +2975,9 @@ class mFile_service_constructor {
         // дбавляем 
         let findProjectIndex = findProjectIndex_inBD(project_ID);
         if (findProjectIndex != null && findProjectIndex >= 0) {
-            let findFileIndexInList = projects_DB.projects[findProjectIndex].attachedFiles.filesList.findIndex(item => item.file_ID == file_ID);
+            let findFileIndexInList = serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].attachedFiles.filesList.findIndex(item => item.file_ID == file_ID);
             if (findFileIndexInList != null && findFileIndexInList >= 0) {
-                projects_DB.projects[findProjectIndex].attachedFiles.filesList.splice(findFileIndexInList, 1);
+                serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].attachedFiles.filesList.splice(findFileIndexInList, 1);
             }
         }
     }
@@ -3069,7 +3055,7 @@ class mFile_service_constructor {
             });
             console.log(" ======= summaryFilesSize= " + summaryFilesSize);
             let user_INDEX_inReestr = findUser_Index_inReestr(user_Email);
-            if (summaryFilesSize > users_Reestr[user_INDEX_inReestr].tarif_plan.max_diskSpace_forUploadFiles - users_Reestr[user_INDEX_inReestr].tarif_plan.used_diskSpace) {
+            if (summaryFilesSize > serverVarriorsDataFromBD_pr0001.users_Reestr[user_INDEX_inReestr].tarif_plan.max_diskSpace_forUploadFiles - serverVarriorsDataFromBD_pr0001.users_Reestr[user_INDEX_inReestr].tarif_plan.used_diskSpace) {
                 console.log("Ошибка - У данного пользователя недостаточно места для загрузки файлов ");
                 newFilesList = "Ошибка - У данного пользователя недостаточно места для загрузки файлов ";
                 return ("Ошибка - У данного пользователя недостаточно места для загрузки файлов ");
@@ -3110,18 +3096,18 @@ class mFile_service_constructor {
 
                     // Суммируем размер загруженных файлов в реестре для данного админа
                     try {
-                        users_Reestr[user_INDEX_inReestr].tarif_plan.used_diskSpace += item.size;
+                        serverVarriorsDataFromBD_pr0001.users_Reestr[user_INDEX_inReestr].tarif_plan.used_diskSpace += item.size;
                         console.log("Размер файла успешно добавлен к размеру файлов в реестре");
-                        // console.log("used_diskSpace= " + users_Reestr[user_INDEX_inReestr].tarif_plan.used_diskSpace);
+                        // console.log("used_diskSpace= " + serverVarriorsDataFromBD_pr0001.users_Reestr[user_INDEX_inReestr].tarif_plan.used_diskSpace);
                     } catch (error) {
                         console.log("Ошибка суммирования размера файлов в реестре: " + error);
                     }
 
                     // ренерним новый список файлов
                     let findProjectIndex = findProjectIndex_inBD(project_ID);
-                    newFilesList = projects_DB.projects[findProjectIndex].attachedFiles.filesList;
+                    newFilesList = serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].attachedFiles.filesList;
                     // console.log("Новый список файловdataBD_fromServer.projects[findProjectIndex].attachedFiles.filesList=: ");
-                    // console.log(projects_DB.projects[findProjectIndex].attachedFiles.filesList);
+                    // console.log(serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].attachedFiles.filesList);
 
                 } catch (error) {
                     console.log("Ошибка записи файла: " + error);
@@ -3189,7 +3175,7 @@ class mFile_service_constructor {
             console.log("pathSaveFile= " + pathSaveFile);
             // проверяем, есть ли свободное место на диске для данного пользователя
             let user_INDEX_inReestr = findUser_Index_inReestr(user_Email);
-            if (newFile.size > users_Reestr[user_INDEX_inReestr].tarif_plan.max_diskSpace_forUploadFiles - users_Reestr[user_INDEX_inReestr].tarif_plan.used_diskSpace) {
+            if (newFile.size > serverVarriorsDataFromBD_pr0001.users_Reestr[user_INDEX_inReestr].tarif_plan.max_diskSpace_forUploadFiles - serverVarriorsDataFromBD_pr0001.users_Reestr[user_INDEX_inReestr].tarif_plan.used_diskSpace) {
                 console.log("Ошибка - У данного пользователя недостаточно места для загрузки файлов ");
                 return ("Ошибка - У данного пользователя недостаточно места для загрузки файлов ");
             }
@@ -3225,7 +3211,7 @@ class mFile_service_constructor {
             }
             // Суммируем размер загруженных файлов в реестре для данного админа
             try {
-                users_Reestr[user_INDEX_inReestr].tarif_plan.used_diskSpace += newFile.size;
+                serverVarriorsDataFromBD_pr0001.users_Reestr[user_INDEX_inReestr].tarif_plan.used_diskSpace += newFile.size;
                 console.log("Размер файла успешно добавлен к размеру файлов в реестре");
             } catch (error) {
                 console.log("Ошибка суммирования размера файлов в реестре: " + error);
@@ -3233,7 +3219,7 @@ class mFile_service_constructor {
 
             // ренерним новый список файлов
             let findProjectIndex = findProjectIndex_inBD(project_ID);
-            newFilesList = projects_DB.projects[findProjectIndex].attachedFiles.filesList;
+            newFilesList = serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndex].attachedFiles.filesList;
 
 
 
@@ -3304,21 +3290,21 @@ let mFile_service = new mFile_service_constructor();
 //----------------------------------
 function responseLongPoolling(responseLongPoolling_Data) {
     console.log("Запуск responseLongPoolling:");
-    for (let i = 0; i < listForResponse.length; i++) {
-        listForResponse[i].user_ResStack.forEach((mCallBack) => {
+    for (let i = 0; i < serverVarriorsDataFromBD_pr0001.listForResponse.length; i++) {
+        serverVarriorsDataFromBD_pr0001.listForResponse[i].user_ResStack.forEach((mCallBack) => {
             //  console.log("Сработала отправка ответа forEach");
             mCallBack(responseLongPoolling_Data);
         });
     }
     // очищаем реестр подписок     
-    listForResponse = [];
-    //  console.log("Состояние listForResponse после очистки:");
-    //  console.log(listForResponse);
+    serverVarriorsDataFromBD_pr0001.listForResponse = [];
+    //  console.log("Состояние serverVarriorsDataFromBD_pr0001.listForResponse после очистки:");
+    //  console.log(serverVarriorsDataFromBD_pr0001.listForResponse);
 }
 //----------------------------------
 function findUser_Index_inReestr(user_Email, knownIndexInReestr) {
     // определяем индекс  юзера по ID
-    let findIndex = users_Reestr.findIndex(item => item.user_Email == user_Email);
+    let findIndex = serverVarriorsDataFromBD_pr0001.users_Reestr.findIndex(item => item.user_Email == user_Email);
     //  console.log("findIndex= "+findIndex);    
     return findIndex;
 }
@@ -3329,7 +3315,7 @@ function find___Or_Find_And_Add_NewUserInReestr(user_Email) {
     // если массив пустой - добавляем пользователя
     if (!(findIndex != null && findIndex >= 0)) {
         // добавляем пользователя
-        users_Reestr.push(new User_inReestr(
+        serverVarriorsDataFromBD_pr0001.users_Reestr.push(new User_inReestr(
             myRandomId(),
             user_Email,
             null,
@@ -3342,7 +3328,7 @@ function find___Or_Find_And_Add_NewUserInReestr(user_Email) {
 }
 //----------------------------------
 function findProjectIndex_inAccessProjects_inReestr(userIndexInReestr, project_ID) {
-    return users_Reestr[userIndexInReestr].accessProjects.findIndex(item => item.project_ID === project_ID);
+    return serverVarriorsDataFromBD_pr0001.users_Reestr[userIndexInReestr].accessProjects.findIndex(item => item.project_ID === project_ID);
 }
 //----------------------------------
 function add_AccessProjectsForUser_inReestr(user_Email, project_ID, role, defaultAdminForThisProject) {
@@ -3350,7 +3336,7 @@ function add_AccessProjectsForUser_inReestr(user_Email, project_ID, role, defaul
     //  console.log("Функция add_AccessProjectsForUser_inReestr");
     // добавляем данные в массив реестр Юзер - доступные проекты
     let index = find___Or_Find_And_Add_NewUserInReestr(user_Email);
-    users_Reestr[index].accessProjects.push(new User_AccessProjects(project_ID, role, defaultAdminForThisProject));
+    serverVarriorsDataFromBD_pr0001.users_Reestr[index].accessProjects.push(new User_AccessProjects(project_ID, role, defaultAdminForThisProject));
     // сохраняем данные в БД реестhа
     need_SaveData = true;
 }
@@ -3367,7 +3353,7 @@ function delete_UsersInReestr_forCurrentProject(project_ID, deleteListForTeam) {
             let projectIndex_InAccessProjects = findProjectIndex_inAccessProjects_inReestr(userIndexInReeatr, project_ID);
             //если проект наден (projectIndex_InAccessProjects>=0), тогда удаляем проект из списка в реестре
             if (projectIndex_InAccessProjects != null && projectIndex_InAccessProjects >= 0) {
-                users_Reestr[userIndexInReeatr].accessProjects.splice(projectIndex_InAccessProjects, 1);
+                serverVarriorsDataFromBD_pr0001.users_Reestr[userIndexInReeatr].accessProjects.splice(projectIndex_InAccessProjects, 1);
             }
         }
     )
@@ -3385,11 +3371,11 @@ function add_or_update___UsersInReestr_forCurrentProject(project_ID, newTeamForP
             let projectIndex_InAccessProjects = findProjectIndex_inAccessProjects_inReestr(userIndexInReestr, project_ID);
             // если проекь присутствует в списке пользователя - обновляем перезаписываем данные проекта
             if (projectIndex_InAccessProjects != null && projectIndex_InAccessProjects >= 0) {
-                users_Reestr[userIndexInReestr].accessProjects[projectIndex_InAccessProjects] = new User_AccessProjects(project_ID, item.userRole, defaultAdminForThisProject);
+                serverVarriorsDataFromBD_pr0001.users_Reestr[userIndexInReestr].accessProjects[projectIndex_InAccessProjects] = new User_AccessProjects(project_ID, item.userRole, defaultAdminForThisProject);
             }
             // иначе добавляем проект в список  доступных проектов пользователя
             else {
-                users_Reestr[userIndexInReestr].accessProjects.push(
+                serverVarriorsDataFromBD_pr0001.users_Reestr[userIndexInReestr].accessProjects.push(
                     new User_AccessProjects(project_ID, item.userRole, defaultAdminForThisProject)
                 );
             }
@@ -3401,23 +3387,21 @@ function add_or_update___UsersInReestr_forCurrentProject(project_ID, newTeamForP
 function dataPreparation_ForCurrentClient_TopData(user_Email) {
     //  console.log("ЗАПУСК item.dataPreparation_ForCurrentClient_TopData ");
 
-    let adaptionFilterData_resFtomServ = new BisData_Shablon_DB();
+    let adaptionFilterData_resFtomServ = { projects: [] };
     // находим юзера в реестре
-    let clientIndex_InReestr = users_Reestr.findIndex(item => item.user_Email == user_Email);
+    let clientIndex_InReestr = serverVarriorsDataFromBD_pr0001.users_Reestr.findIndex(item => item.user_Email == user_Email);
     // если пользователь не найден - возвращаем пустые данные
-    if (!(clientIndex_InReestr != null && clientIndex_InReestr >= 0)) {
-        return adaptionFilterData_resFtomServ;
-    }
+    if (!clientIndex_InReestr) return adaptionFilterData_resFtomServ;
 
     // далее проходим по массиву, и по каждому найденному проекту - находим данный проект в БД и копируем из него данный в результирующий массив
-    users_Reestr[clientIndex_InReestr].accessProjects.forEach(
+    serverVarriorsDataFromBD_pr0001.users_Reestr[clientIndex_InReestr].accessProjects.forEach(
         (item) => {
             // для текущего проекта находим его индекс в БД:
             let findProjectIndexInBD = findProjectIndex_inBD(item.project_ID);
 
             if (findProjectIndexInBD >= 0) {
                 // добавляем данные в результирующий массив
-                adaptionFilterData_resFtomServ.projects.push(projects_DB.projects[findProjectIndexInBD]);
+                adaptionFilterData_resFtomServ.projects.push(serverVarriorsDataFromBD_pr0001.projects_DB[findProjectIndexInBD]);
 
                 // пристегиваем к данным по каждому проекту индивидуальную информацию о последнем времени просмотра этого проекта конкретным пользователем
                 if (item.time_individual_wasReadEvents) {
@@ -3438,19 +3422,19 @@ function dataPreparation_ForCurrentClient_TopData(user_Email) {
         }
     )
     // пристегиваем список собственных корп аккаунтов
-    adaptionFilterData_resFtomServ.corpAccounts = users_Reestr[clientIndex_InReestr].corpAccounts;
+    adaptionFilterData_resFtomServ.corpAccounts = serverVarriorsDataFromBD_pr0001.users_Reestr[clientIndex_InReestr].corpAccounts;
 
     // пристегиваем данные аккаунта
     // делаем копию данных
-    adaptionFilterData_resFtomServ.userReestrPersonalData = JSON.parse(JSON.stringify(users_Reestr[clientIndex_InReestr]));
+    adaptionFilterData_resFtomServ.userReestrPersonalData = JSON.parse(JSON.stringify(serverVarriorsDataFromBD_pr0001.users_Reestr[clientIndex_InReestr]));
     // удаляем из ответа серверу секретные данные юзера
     delete adaptionFilterData_resFtomServ.userReestrPersonalData.autorisationData;
     return adaptionFilterData_resFtomServ;
 }
 //----------------------------------
 function findProjectIndex_inBD(project_ID) {
-    if (projects_DB && projects_DB.projects) {
-        let findProjectIndexInBD = projects_DB.projects.findIndex(item => item.project_ID === project_ID);
+    if (serverVarriorsDataFromBD_pr0001.projects_DB) {
+        let findProjectIndexInBD = serverVarriorsDataFromBD_pr0001.projects_DB.findIndex(item => item.project_ID === project_ID);
         return findProjectIndexInBD;
     }
     else return null;
@@ -3460,7 +3444,7 @@ function find_subProject_Index_inBD(main_Project_ID, subProject_ID) {
     let main_ProjectIndex = findProjectIndex_inBD(main_Project_ID);
     let sub_ProjectIndex = -1;
     if (main_ProjectIndex != null && main_ProjectIndex >= 0) {
-        sub_ProjectIndex = projects_DB.projects[main_ProjectIndex].subProjects.findIndex(item => item.subProject_ID === subProject_ID);
+        sub_ProjectIndex = serverVarriorsDataFromBD_pr0001.projects_DB[main_ProjectIndex].subProjects.findIndex(item => item.subProject_ID === subProject_ID);
     }
     return sub_ProjectIndex;
 }
@@ -3470,7 +3454,7 @@ function findProjectIndex_InCurrentUserReestr(userIndex_inReestr, project_ID) {
     // console.log("userIndex_inReestr= "+userIndex_inReestr);
     // console.log("project_ID= "+project_ID);
     if (userIndex_inReestr != null && userIndex_inReestr >= 0) {
-        let findProjectIndexInCurrentUserReedtr = users_Reestr[userIndex_inReestr].accessProjects.findIndex(item => item.project_ID === project_ID);
+        let findProjectIndexInCurrentUserReedtr = serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex_inReestr].accessProjects.findIndex(item => item.project_ID === project_ID);
         return findProjectIndexInCurrentUserReedtr;
     }
     else return null;
@@ -3478,7 +3462,7 @@ function findProjectIndex_InCurrentUserReestr(userIndex_inReestr, project_ID) {
 //----------------------------------
 function find_subProjectIdex_InCurr_User_Reestr(userIndex_inReestr, project_INDEX, subProject_ID) {
     // console.log("=== ЗАПУСК find_subProjectIdex_InCurr_User_Reestr");
-    let finded_subProjectIndex_InCurrentUserReestr = users_Reestr[userIndex_inReestr].accessProjects[project_INDEX].time_individual_wasReadEvents.subProjects_individual_WAS_READ_EVENTS.findIndex(item => item.subProject_ID === subProject_ID);
+    let finded_subProjectIndex_InCurrentUserReestr = serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex_inReestr].accessProjects[project_INDEX].time_individual_wasReadEvents.subProjects_individual_WAS_READ_EVENTS.findIndex(item => item.subProject_ID === subProject_ID);
     if (finded_subProjectIndex_InCurrentUserReestr != null && finded_subProjectIndex_InCurrentUserReestr >= 0) {
         // console.log("=== finded_subProjectIndex_InCurrentUserReestr");
         // console.log(finded_subProjectIndex_InCurrentUserReestr);
@@ -3492,7 +3476,7 @@ function find_subProjectIdex_InCurr_User_Reestr(userIndex_inReestr, project_INDE
 function get_object_WasReadEvents_forSubproject___BY_INDEXES(userIndex_inReestr, project_INDEX, subProject_INDEX) {
     let finedData = null;
     try {
-        let finedData = users_Reestr[userIndex_inReestr].accessProjects[project_INDEX].time_individual_wasReadEvents.subProjects_individual_WAS_READ_EVENTS[subProject_INDEX];
+        let finedData = serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex_inReestr].accessProjects[project_INDEX].time_individual_wasReadEvents.subProjects_individual_WAS_READ_EVENTS[subProject_INDEX];
 
         return finedData;
     } catch (error) {
@@ -3524,7 +3508,7 @@ function get_object_WasReadEvents_forSubproject___BY_ID(user_Email, project_ID, 
 
             if (fined_subProjectIndex_InCurr_Us_Reestr != null && fined_subProjectIndex_InCurr_Us_Reestr >= 0) {
                 try {
-                    finedData = users_Reestr[finedUserIndex].accessProjects[finedProjectIdex_InCurr_Us_Reestr].time_individual_wasReadEvents.subProjects_individual_WAS_READ_EVENTS[fined_subProjectIndex_InCurr_Us_Reestr];
+                    finedData = serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].accessProjects[finedProjectIdex_InCurr_Us_Reestr].time_individual_wasReadEvents.subProjects_individual_WAS_READ_EVENTS[fined_subProjectIndex_InCurr_Us_Reestr];
                     // console.log("ОБЪЕКТ get_object_WasReadEvents_forSubproject = ");
                     // console.log(finedData);
                 } catch (error) {
@@ -3556,7 +3540,7 @@ function get_object_WasReadEvents_forProject___BY_ID(user_Email, project_ID) {
         console.log("finedProjectIdex_InCurr_Us_Reestr=" + finedProjectIdex_InCurr_Us_Reestr);
         if (finedProjectIdex_InCurr_Us_Reestr != null && finedProjectIdex_InCurr_Us_Reestr >= 0) {
             try {
-                finedData = users_Reestr[finedUserIndex].accessProjects[finedProjectIdex_InCurr_Us_Reestr].time_individual_wasReadEvents;
+                finedData = serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].accessProjects[finedProjectIdex_InCurr_Us_Reestr].time_individual_wasReadEvents;
             } catch (error) {
                 console.log("ОШИБКА get_object_WasReadEvents_forProject___BY_ID");
                 console.log(error);
@@ -3584,7 +3568,7 @@ function get__OR___ADD_and_GET___object_WasReadEvents_forSubproject___BY_ID(user
                 // создаем субпроект в проекте реестра юзера
                 console.log("Создаем объект просмотра времени субпроекта, пользователь " + user_Email + ", субпроект " + subProject_ID);
 
-                users_Reestr[finedUserIndex].accessProjects[finedProjectIdex_InCurr_Us_Reestr].time_individual_wasReadEvents.subProjects_individual_WAS_READ_EVENTS.push(new SubProjectEvents_inUserReestr(subProject_ID));
+                serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].accessProjects[finedProjectIdex_InCurr_Us_Reestr].time_individual_wasReadEvents.subProjects_individual_WAS_READ_EVENTS.push(new SubProjectEvents_inUserReestr(subProject_ID));
 
                 saveAllDataHandle();
 
@@ -3606,7 +3590,7 @@ function find_chatIndex_in_chatBD(project_OR_subProject___id, knownIndexInReestr
     // определяем индекс  юзера по ID
     try {
         // console.log("Запуск find_chatIndex_in_chatBD");
-        let findIndex = chat_DB.findIndex(item => item.project_OR_subProject___id == project_OR_subProject___id);
+        let findIndex = serverVarriorsDataFromBD_pr0001.chat_DB.findIndex(item => item.project_OR_subProject___id == project_OR_subProject___id);
         return findIndex;
     } catch (error) {
         console.log("ОШИБКА в find_chatIndex_in_chatBD" + error);
@@ -3621,9 +3605,9 @@ function find___Or_Find_And_Add_NewChat_in_chatBD(project_OR_subProject___id, kn
         // если массив пустой - добавляем пользователя
         if (findIndex < 0) {
             // добавляем новый чат
-            chat_DB.push(new Chat(
+            serverVarriorsDataFromBD_pr0001.chat_DB.push(new Chat(
                 project_OR_subProject___id,
-                chat_DB.length, // это knownIndexInReestr // не вычитаем единицу из length, т.к. это длинна массива до добавления нового проекта
+                serverVarriorsDataFromBD_pr0001.chat_DB.length, // это knownIndexInReestr // не вычитаем единицу из length, т.к. это длинна массива до добавления нового проекта
             ));
             // повторно запускаем поиск индекса
             findIndex = find_chatIndex_in_chatBD(project_OR_subProject___id, project_OR_subProject___id, knownIndexInReestr);
@@ -3640,11 +3624,11 @@ function delete_oneProjectFromBD(project_ID, knownIndexInReestr) {
         let finedProjectIndex = findProjectIndex_inBD(project_ID, knownIndexInReestr);
         if (finedProjectIndex != null && finedProjectIndex >= 0) {
             // удаляем из реестра пользователей
-            delete_UsersInReestr_forCurrentProject(project_ID, projects_DB.projects[finedProjectIndex].teamList);
+            delete_UsersInReestr_forCurrentProject(project_ID, serverVarriorsDataFromBD_pr0001.projects_DB[finedProjectIndex].teamList);
 
             // удаляем проект из БД
             // помечаем проект как временно удаленный
-            projects_DB.projects[finedProjectIndex].isDeletedTemp = true;
+            serverVarriorsDataFromBD_pr0001.projects_DB[finedProjectIndex].isDeletedTemp = true;
 
             need_SaveData = true;
         }
@@ -3661,7 +3645,7 @@ function delete_oneProjectFromBD(project_ID, knownIndexInReestr) {
 function find_subChat_in_chatBD(mainProject_inChat_index, subProject_ID) {
     // console.log("===find_subChat_in_chatBD ");
     let find_subChat_Index = null;
-    find_subChat_Index = chat_DB[mainProject_inChat_index].subProjects_chats.findIndex(item => item.subProject_ID == subProject_ID); // в данном случае значение project_ID соответствует субпроекту, а не главному проекту, т.к. структура чата одиниковая для проектов и субпроектов
+    find_subChat_Index = serverVarriorsDataFromBD_pr0001.chat_DB[mainProject_inChat_index].subProjects_chats.findIndex(item => item.subProject_ID == subProject_ID); // в данном случае значение project_ID соответствует субпроекту, а не главному проекту, т.к. структура чата одиниковая для проектов и субпроектов
     // console.log("find_subChat_Index= " + find_subChat_Index);
     return find_subChat_Index;
 }
@@ -3683,7 +3667,7 @@ function find_OR__find_AND_add__new_subChat_in_chatBD(mainProject_inChat_index, 
         // и сразу удаляем для субчата ненужный компонент
         delete new_subChat.subProjects_chats;
         // добавляем в БД чатов
-        chat_DB[mainProject_inChat_index].subProjects_chats.push(new_subChat);
+        serverVarriorsDataFromBD_pr0001.chat_DB[mainProject_inChat_index].subProjects_chats.push(new_subChat);
         // повторно запускаем поиск индекса
         find_subChat_Index = find_subChat_in_chatBD(mainProject_inChat_index, subProject_ID);
     }
@@ -3702,7 +3686,7 @@ function add_chat_in_chatBD(project_OR_subProject___id, parent_Project_ID, known
     );
     // найденный индекс передаем в базу данных для последующего быстрого поиска
     // let findprojectIndex_in_BD = findProjectIndex_inBD(project_ID);
-    // projects_DB.projects[findprojectIndex_in_BD].prog_chat_vector.knownIndexInReestr_in_chatBD = findIndex_in_chatBD;
+    // serverVarriorsDataFromBD_pr0001.projects_DB[findprojectIndex_in_BD].prog_chat_vector.knownIndexInReestr_in_chatBD = findIndex_in_chatBD;
     // сохраняем данные в БД реестhа
     need_SaveChat = true;
 }
@@ -3710,12 +3694,12 @@ function add_chat_in_chatBD(project_OR_subProject___id, parent_Project_ID, known
 //----------------------------------
 async function mSaveFileDB(data) {
     try {
-       // console.log("---------");
-       // console.log("Функция mSaveFileDB, 'data' =");
+        // console.log("---------");
+        // console.log("Функция mSaveFileDB, 'data' =");
         // let pathNameID = '.../DataBase/' + 'm_DB' + '.json';
         let pathNameID = get_valid_adress_fileOrFolder(config_pr0001.local_files_forder_Adress + 'm_DB.json');
         fs.writeFileSync(pathNameID, JSON.stringify(data));
-       // console.log("Был успешно сохранен m_DB.json");
+        // console.log("Был успешно сохранен m_DB.json");
     } catch (error) {
         console.log("Ошибка сохранения файла m_DB.json");
         console.log(error);
@@ -3727,7 +3711,7 @@ function saveLocalFile(fileName, data) {
     try {
         let pathNameID = get_valid_adress_fileOrFolder(config_pr0001.local_files_forder_Adress + fileName);
         fs.writeFileSync(pathNameID, JSON.stringify(data));
-       // console.log("Был успешно сохранен " + fileName);
+        // console.log("Был успешно сохранен " + fileName);
     } catch (error) {
         console.log("Ошибка сохранения файла " + fileName);
         console.log(error);
@@ -3735,19 +3719,19 @@ function saveLocalFile(fileName, data) {
 }
 
 //----------------------------------
-async function saveData() {
-    // console.log("Запуск saveData");
+async function saveData_pr0001() {
+    // console.log("Запуск saveData_pr0001");
     // сохранение БД и реестра
     if (need_SaveData == true && access_SaveData == true) {
-        // console.log("Запускаем сохранение saveData");
+        // console.log("Запускаем сохранение saveData_pr0001");
         // need_SaveData = false;
         access_SaveData = false; // закрываем доступ для предотвращения дублирования функции
         try {
             // сохраняем БД
-            //  await mSaveFileDB(projects_DB);
-            await saveLocalFile(config_pr0001.mFileName_projectsDB, projects_DB);
+            //  await mSaveFileDB(serverVarriorsDataFromBD_pr0001.projects_DB);
+            saveLocalFile(config_pr0001.mFileName_projectsDB, serverVarriorsDataFromBD_pr0001.projects_DB);
 
-            // console.log("Ф.saveData --- успешно сохранена БД");
+            // console.log("Ф.saveData_pr0001 --- успешно сохранена БД");
         } catch (error) {
             // console.log("Ошибка сохранения БД");
             // console.log(error);
@@ -3758,9 +3742,9 @@ async function saveData() {
 
         try {
             // затем сохраняем реестр
-            // await mSaveUserReestr_inBD(users_Reestr);
-            await saveLocalFile(config_pr0001.mFileName_userReestr, users_Reestr);
-            // console.log("Ф.saveData --- успешно сохранена БД");
+            // await mSaveUserReestr_inBD(serverVarriorsDataFromBD_pr0001.users_Reestr);
+            await saveLocalFile(config_pr0001.mFileName_userReestr, serverVarriorsDataFromBD_pr0001.users_Reestr);
+            // console.log("Ф.saveData_pr0001 --- успешно сохранена БД");
         } catch (error) {
             // console.log("Ошибка сохранения БД");
             // console.log(error);
@@ -3778,9 +3762,9 @@ async function saveData() {
         access_SaveChat = false; // закрываем доступ для предотвращения дублирования функции
         try {
             // сохраняем БД
-            // await mSaveChatDB(chat_DB);
-            await saveLocalFile(config_pr0001.mFileName_chatDB, chat_DB);
-            // console.log("Ф.saveData --- успешно сохранена БД");
+            // await mSaveChatDB(serverVarriorsDataFromBD_pr0001.chat_DB);
+            await saveLocalFile(config_pr0001.mFileName_chatDB, serverVarriorsDataFromBD_pr0001.chat_DB);
+            // console.log("Ф.saveData_pr0001 --- успешно сохранена БД");
         } catch (error) {
             // console.log("Ошибка сохранения БД");
             // console.log(error);
@@ -3800,9 +3784,9 @@ function saveAllDataHandle() {
     /* 
         if (access_SaveData == true) {
             access_SaveData = false;
-            mSaveFileDB(projects_DB);
-            mSaveUserReestr_inBD(users_Reestr);
-            mSaveChatDB(chat_DB);
+            mSaveFileDB(serverVarriorsDataFromBD_pr0001.projects_DB);
+            mSaveUserReestr_inBD(serverVarriorsDataFromBD_pr0001.users_Reestr);
+            mSaveChatDB(serverVarriorsDataFromBD_pr0001.chat_DB);
         }
         access_SaveData = true;
      */
@@ -3824,10 +3808,10 @@ function getOnlineTimeCurrentUser(user_Email) {
 
     // console.log("userIndex= " + userIndex);
     if ((userIndex != null && userIndex >= 0)
-        && users_Reestr[userIndex].onlineStatus
-        && users_Reestr[userIndex].onlineStatus.lastOnlineTime
+        && serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].onlineStatus
+        && serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].onlineStatus.lastOnlineTime
     ) {
-        lastOnlineTime = users_Reestr[userIndex].onlineStatus.lastOnlineTime
+        lastOnlineTime = serverVarriorsDataFromBD_pr0001.users_Reestr[userIndex].onlineStatus.lastOnlineTime
     }
     // console.log("onlineTime= " + lastOnlineTime);
     return lastOnlineTime;
@@ -3893,12 +3877,12 @@ export let varsANDfunctions_fromPostService = {
     // firstLoad_UsersReestr: firstLoad_UsersReestr,
     // firstLoad_ChatDB: firstLoad_ChatDB,
     // firstLoad_oneFileData_fromLocalDiskOrMongoDB: firstLoad_oneFileData_fromLocalDiskOrMongoDB,
-    serverVarriorsData_pr0001: serverVarriorsData_pr0001,
+    serverVarriorsDataFromBD_pr0001: serverVarriorsDataFromBD_pr0001,
 
     // это переменные, объекты и указатели
-    projects_DB: projects_DB,
-    users_Reestr: users_Reestr,
-    chat_DB: chat_DB,
+    projects_DB: serverVarriorsDataFromBD_pr0001.projects_DB,
+    users_Reestr: serverVarriorsDataFromBD_pr0001.users_Reestr,
+    chat_DB: serverVarriorsDataFromBD_pr0001.chat_DB,
     findUser_Index_inReestr: findUser_Index_inReestr,
     validateAccessToken: mUserService.validateAccessToken,
 };

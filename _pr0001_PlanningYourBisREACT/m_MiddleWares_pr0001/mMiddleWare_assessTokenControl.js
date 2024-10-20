@@ -67,11 +67,11 @@ export default function mMiddleWare_accessTokenControl(req, res, next) {
         }
 
         // console.log("tokensDifferentGadgets= ");
-        // console.log(varsANDfunctions_fromPostService.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[decodeValidationToken.mGadgetProcess_ID]);
+        // console.log(varsANDfunctions_fromPostService.serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[decodeValidationToken.mGadgetProcess_ID]);
 
         if (
             // если токен для указанного процесса не существует в реестре пользователя
-            !varsANDfunctions_fromPostService.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[decodeValidationToken.mGadgetProcess_ID]
+            !varsANDfunctions_fromPostService.serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[decodeValidationToken.mGadgetProcess_ID]
         ) {
             console.log("Прерываем Auth, отсутствует токен в реестре пользователя для данного процесса ");
             res.status(401).json("m User is not auth");
@@ -81,7 +81,7 @@ export default function mMiddleWare_accessTokenControl(req, res, next) {
 
         if (
             // если токен для указанного процесса в реестре пользователя не идентичен токену, переданному в запросе
-            varsANDfunctions_fromPostService.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[decodeValidationToken.mGadgetProcess_ID].accessToken != req.headers.accesstoken
+            varsANDfunctions_fromPostService.serverVarriorsDataFromBD_pr0001.users_Reestr[finedUserIndex].autorisationData.tokensDifferentGadgets[decodeValidationToken.mGadgetProcess_ID].accessToken != req.headers.accesstoken
         ) {
             console.log("Прерываем Auth, токен не соответствует токену, который записан в реестре пользователя для данного процессапрошел валидацию");
             res.status(401).json("m User is not auth");

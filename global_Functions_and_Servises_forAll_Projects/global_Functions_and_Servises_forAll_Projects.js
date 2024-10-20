@@ -113,7 +113,7 @@ export default class global_Functions_and_Servises_forAll_Projects {
                         if (!global_Data_forAllProjects.firstDownloadListFromMongoDB.has(combiNameFile)) {
                             console.log("=== НЕ УДАЛОСЬ ПРИ ЗАПУСКЕ ПРОЧИТАТЬ ЛОКАЛЬНЫЙ ФАЙЛ, пытаемся скачать с Монго: " + fileName);
                             global_Data_forAllProjects.firstDownloadListFromMongoDB.add(combiNameFile);
-                            await global_Functions_and_Servises_forAll_Projects.mongoDB_accessAndService_forAllProjects.import_AndDecompressed_AndSave_ZIP_File_FromMongoDB(
+                            let successfullyLoadedFileFromMongo = await global_Functions_and_Servises_forAll_Projects.mongoDB_accessAndService_forAllProjects.import_AndDecompressed_AndSave_ZIP_File_FromMongoDB(
                                 myNameID_ActualProject,
                                 connectionToMongo_actualProject,
                                 local_files_forder_Adress,
@@ -302,7 +302,9 @@ export default class global_Functions_and_Servises_forAll_Projects {
                                 .pipe(writeStream)  // Запись в файл
                                 // Обработка событий                   
                                 .on('finish', () => {
-                                    resolve(console.log('File successfully downloaded and decompressed'));
+
+                                    console.log('File successfully downloaded and decompressed')
+                                    resolve('import_AndDecompressed_AndSave_ZIP_File_FromMongoDB --- successfully');
                                 })
                                 .on('error', (error) => {
                                     console.error('Error:', error);
