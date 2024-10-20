@@ -11,7 +11,7 @@ import config_pr0001 from './_pr0001_PlanningYourBisREACT/config_pr0001.js';
 import global_Functions_and_Servises_forAll_Projects from './global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
 
 // Активировать после отладки соседних проектов, перед выкладкой на Амазон
-export let connection_to_my_InfoTelegramBot;
+export let connectionTo_infoTelegramBot = "waitinCobbection";
 
 //=======================
 const mServer = express();
@@ -20,16 +20,12 @@ mServer.use(fileUpload({}));
 mServer.use(cors({
     origin: [
         "https://web.postman.co",
-
         "http://localhost:3000",
         "https://litepm.com",
         "http://litepm.com",
         "https://ole-t.github.io",
-        "https:3.124.62.35", // - проверить, работает ли это. Это может быть полезным, чтобы не присваивать серверу доменное имя, а пользоваться только статичным IP-адресом
-        "3.124.62.35", // - проверить, работает ли это. Это может быть полезным, чтобы не присваивать серверу доменное имя, а пользоваться только статичным IP-адресом
     ],
-    // след необязательно - указывает тип допустимых запросов
-    // methods: ['GET', 'POST'],
+    methods: ['GET', 'POST'],
     // след для разрешения отправки Куки
     credentials: true,
 }
@@ -55,12 +51,12 @@ async function mStartApp() {
     // подключаемся к телеграм боту для получения оповещений
     try {
         // если соединение к телеграм боту не отключено для избежанием конфликта с моим сервером на Амазон
-        if (connection_to_my_InfoTelegramBot) {
+        if (connectionTo_infoTelegramBot) {
             try {
-                connection_to_my_InfoTelegramBot = global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.connection_to_CurrentTelegramBot(config_serverCombi.telegramAccessToken___myInfoTelegramBot);
+                connectionTo_infoTelegramBot = global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.connection_to_CurrentTelegramBot(config_serverCombi.telegramAccessToken___myInfoTelegramBot);
                 // Запускаем слушатель ТелеграмБота
 
-                global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.listenerCurrentTelegramBot(connection_to_my_InfoTelegramBot);
+                global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.listenerCurrentTelegramBot(connectionTo_infoTelegramBot);
             } catch (error) {
                 console.log("Ошибка запуска функций Telegram");
                 console.log(error);
@@ -82,17 +78,17 @@ async function mStartApp() {
             // сообщение в телеграм
             try {
                 // если соединение к телеграм боту не отключено для избежанием конфликта с моим сервером на Амазон
-                if (connection_to_my_InfoTelegramBot) {
+                if (connectionTo_infoTelegramBot) {
                     try {
                         await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                            connection_to_my_InfoTelegramBot,
+                            connectionTo_infoTelegramBot,
                             config_serverCombi.adminTelegramAccount_ID_for_information,
                             " ___serverCombi", // Название проекта
                             "Cервер перезапущен", // текст сообщения
                             config_serverCombi.emodziListTelegram_currentProject.defaul_currentProjectEmodzi //емодзи из переменной, из списка 
                         );
                         await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                            connection_to_my_InfoTelegramBot,
+                            connectionTo_infoTelegramBot,
                             config_serverCombi.adminTelegramAccount_ID_for_information,
                             "", // Название проекта
                             "Это пример моего уведомления", // текст сообщения

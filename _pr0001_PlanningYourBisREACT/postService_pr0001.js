@@ -41,89 +41,6 @@ let mySecretKey_forRefreshToken = "thisIsMySecretKey_ForRefreshToken";
 
 // Загружаем базы данных в проект
 await first_LoadData_pr0001();
-/* 
-console.log('');
-console.log('После загрузки данных pr0001:');
-console.log('');
-console.log('projects_DB= ');
-console.log(serverVarriorsDataFromBD_pr0001.projects_DB);
-*/
-
-/* 
-console.log('');
-console.log('users_Reestr= ');
-console.log(serverVarriorsDataFromBD_pr0001.users_Reestr);
-console.log('');
-console.log('listForResponse= ');
-console.log(serverVarriorsDataFromBD_pr0001.listForResponse);
- */
-
-
-// Экспортируем данные в МонгоДБ - НЕ УДАЛЯТЬ
-/* 
-for (let elem of pr0001_workVarriorsAndFalesNames) {
-    // console.log("elem= " + elem);
-    await global_Functions_and_Servises_forAll_Projects.mongoDB_accessAndService_forAllProjects.export_And_ZIP_LocalFile_ToMongoDB(
-        "pr0001",
-        connectToMongo_pr0001,
-        config_pr0001.localFilesAdress,
-        elem[0] // тут название файла
-    );
-}
-*/
-
-/* 
-async function saveDataControl() {
-    // console.log("Запуск saveDataControl");
-    setTimeout(
-        async () => {
-            // console.log("Запуск saveDataControl");
-            try {
-                saveData_pr0001();
-            } catch (error) {
-                console.log("Ошибка в saveDataControl");
-                console.log(error);
-            }
-
-
-            // также сохраняем в Монго ДБ
-            if (access_SaveFalesToMongoDB && (Date.now() - timePreviousSave_FalesToMongoDB) > 3600000) {
-                // console.log(" ");
-                // console.log("Плановое сохранение в Монго");
-                access_SaveFalesToMongoDB = false;
-
-                // Экспортируем данные в МонгоДБ
-                for (let elem of pr0001_workVarriorsAndFalesNames) {
-                    await global_Functions_and_Servises_forAll_Projects.mongoDB_accessAndService_forAllProjects.export_And_ZIP_LocalFile_ToMongoDB(
-                        "pr0001",
-                        connectToMongo_pr0001,
-                        config_pr0001.localFilesAdress,
-                        elem[0]
-                    )
-                        .then(() => {
-                            console.log("Файлы в монго сохранены")
-                        })
-                        .then(() => {
-                            console.log("ПРОДОЛЖЕНИЕ 4");
-                            timePreviousSave_FalesToMongoDB = Date.now();
-                            access_SaveFalesToMongoDB = true;
-                        })
-                        .catch((err) => {
-                            console.log("ОШИБКА из saveDataControl при сохранения файлов в Монго");
-                            console.log(err);
-                            access_SaveFalesToMongoDB = true;
-                        })
-                }
-            }
-
-
-            saveDataControl();
-
-        }, 900000 // 15 минут
-    )
-}
-saveDataControl();
- */
 
 //===============================
 class postService_pr0001 {
@@ -406,7 +323,7 @@ class postService_pr0001 {
 
             try {
                 // добавляем сообщение в БД чатов
-                serverVarriorsDataFromBD_pr0001.chat_DB[index__in_serverVarriorsDataFromBD_pr0001.chat_DB].messages.push(newMessage);
+                serverVarriorsDataFromBD_pr0001.chat_DB[index__in_chat_DB].messages.push(newMessage);
                 need_SaveChat = true;
                 need_SaveData = true;
                 saveAllDataHandle();

@@ -65,13 +65,21 @@ export const varrsAndData_pr0002 = {
 }
 
 // подключаемся к телеграм боту для получения оповещений
-let connection_to_telegramBot___BTC_USD_signal;
+// Активировать
+let connection_to_telegramBot___BTC_USD_signal_pr0002 = "waitinCobbection";
+
 try {
-    connection_to_telegramBot___BTC_USD_signal = global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.connection_to_CurrentTelegramBot(config_pr0002.telegramAccessToken___BTC_USD_signal);
-    // Запускаем слушатель ТелеграмБота
-    // global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.listenerCurrentTelegramBot(connection_to_telegramBot___BTC_USD_signal);
+    if (connection_to_telegramBot___BTC_USD_signal_pr0002) {
+        connection_to_telegramBot___BTC_USD_signal_pr0002 = global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.connection_to_CurrentTelegramBot(config_pr0002.telegramAccessToken___BTC_USD_signal);
+        // Запускаем слушатель ТелеграмБота
+        // global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.listenerCurrentTelegramBot(connection_to_telegramBot___BTC_USD_signal_pr0002);
+    }
+    else {
+        console.log('connection_to_telegramBot___BTC_USD_signal_pr0002 - ДЕАКТИВИРОВАН');
+    }
+
 } catch (error) {
-    console.log("Ошибка запуска функций Telegram");
+    console.log("Ошибка запуска функций Telegram connection_to_telegramBot___BTC_USD_signal_pr0002");
     console.log(error);
 }
 
@@ -114,72 +122,6 @@ await binanceConnection();
 
 // загружаем сохраненные данные при запуске приложения
 await first_LoadData_pr0002();
-
-
-// Удалить - рассылка приглашения старым клиентам 
-/* 
-const oldClients = [
-    1297843164
-    , 5035086715
-    , 875852069
-    , 5290947571
-    , 1898218659
-    , 317117744
-    , 1277101774
-    , 437724423
-    , 5201103559
-    , 745685895
-    , 690193889
-    , 1424402819
-    , 383166742
-    , 383166742
-    , 764307659
-    , 1878535308
-    , 754689027
-    , 1052089860
-    , 5009718863
-    , 5081856280
-    , 1958439324
-    , 1176358305
-    , 1072135201
-    , 1011105903
-    , 1225712106
-    , 1250539544
-    , 299601807
-    , 1864785150
-    , 845887037
-    , 2009841126
-    , 1880013757
-    , 409148864
-    , 1022064877
-    , 843177915
-    , 1805013287
-    , 961340998
-    , 1884822634
-    , 528532548
-    , 1668193760  // это мой телеграм
-]
-setTimeout(() => {
-    oldClients.forEach((item) => {
-        try {
-            global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
-                item, // id пользователя
-                "", // Название проекта
-                `Keep monitoring the current $/Bitcoin exchange rate. Welcome to our service!`, // текст сообщения
-                null, //емодзи из переменной, из списка
-                keyboardUpdate(item),  // это передаваемая клавиатура для телеграм-Бота
-            )
-        } catch (error) {
-            console.log("Не удалось сделать рассылку пользователю: " + item);
-            console.log(error);
-        }
-    }
-    )
-
-}, 5000);
- */
-
 
 
 // это аналог класса, который возвращает объект нового пользователя, но без названия эеземпляра класса
@@ -330,15 +272,22 @@ function keyboardUpdate(user_ID) {
 // обрабатываем входящие команды
 async function incominCommandFromUser_service() {
 
-    connection_to_telegramBot___BTC_USD_signal.on('message', async (msg) => {
+    try {
+        if (connection_to_telegramBot___BTC_USD_signal_pr0002) { /* Ок, продолжаем */ }
+    } catch (error) {
+        console.log('Прерываем incominCommandFromUser_service, поскольку connection_to_telegramBot___BTC_USD_signal_pr0002 ДЕАКТИВИРОВАН');
+        return;
+    }
+
+    connection_to_telegramBot___BTC_USD_signal_pr0002.on('message', async (msg) => {
         const incoming_chatID = msg.chat.id;
         // const incoming_text = msg.text;
         const incomingButtonCommand = identification_inIncomingButtonComsnd(msg);
 
-      //   console.log('');
-      //   console.log('incomingButtonCommand: ' + incomingButtonCommand);
-      //   console.log('Входящее сообщение:');
-      //   console.log(msg);
+        //   console.log('');
+        //   console.log('incomingButtonCommand: ' + incomingButtonCommand);
+        //   console.log('Входящее сообщение:');
+        //   console.log(msg);
 
         //  console.log('');
         //  console.log('Состояние реестра:');
@@ -358,8 +307,7 @@ async function incominCommandFromUser_service() {
 
                     // отправляем себе уведомление о добавлении нового пользователе
                     await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                        connection_to_telegramBot___BTC_USD_signal,
-                        // connection_to_my_InfoTelegramBot,
+                        connection_to_telegramBot___BTC_USD_signal_pr0002,
                         config_pr0002.adminTelegramAccount_ID_pr0002,
                         config_pr0002.projectNameID + "     " + config_pr0002.commentNameCurrentProject, // Название проекта
                         'ИНФО: Добавлен пользователь, ' + incoming_chatID + ",  " + msg.chat.username + ",  " + msg.chat.first_name + ',  Количество пользователей: ' + Object.keys(varrsAndData_pr0002.usersReestrTelegram).length, // текст сообщения
@@ -368,7 +316,7 @@ async function incominCommandFromUser_service() {
 
                     // отправляем приветствие новому пользователю
                     global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                        connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
                         msg.chat.id, // id пользователя
                         "", // Название проекта
                         'This bot will notify you when the current BTC/USD price reaches the limits you set.', // текст сообщения
@@ -399,7 +347,7 @@ async function incominCommandFromUser_service() {
                     }
 
                     global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                        connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
                         incoming_chatID, // id пользователя
                         "", // Название проекта
                         'The current market rate for BTC/USD has been updated: ' + '\n' + varrsAndData_pr0002.slideData.currentPrice.toLocaleString('ru-RU') + ' BTC/USD', // текст сообщения
@@ -415,7 +363,7 @@ async function incominCommandFromUser_service() {
             // установка верхнего лимита
             case 2: {
                 try {
-                    await connection_to_telegramBot___BTC_USD_signal.sendMessage(
+                    await connection_to_telegramBot___BTC_USD_signal_pr0002.sendMessage(
                         incoming_chatID,
                         'Enter upper limit:',
                         // третьим параметром вводим параметр:
@@ -431,7 +379,7 @@ async function incominCommandFromUser_service() {
                             console.log(userAnswer);
 
                             // Дальнейшее выполнение кода будет после ответа пользователя
-                            await connection_to_telegramBot___BTC_USD_signal.onReplyToMessage(
+                            await connection_to_telegramBot___BTC_USD_signal_pr0002.onReplyToMessage(
                                 incoming_chatID,
                                 userAnswer.message_id, // это ID чата, на которое бот ожидает ответ
                                 (userAnswer) => {
@@ -444,7 +392,7 @@ async function incominCommandFromUser_service() {
                                     let validateUserNubber = validation_andRerurn_InputNumber(userAnswer.text);
                                     if (validateUserNubber == null) {
                                         global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                                            connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                                            connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
                                             incoming_chatID, // id пользователя
                                             "", // Название проекта
                                             `The entered value is not a valid number, the command was not accepted`, // текст сообщения
@@ -458,7 +406,7 @@ async function incominCommandFromUser_service() {
                                     validateUserNubber = validation_inputTopLimit(incoming_chatID, validateUserNubber);
                                     if (validateUserNubber == null) {
                                         global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                                            connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                                            connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
                                             incoming_chatID, // id пользователя
                                             "", // Название проекта
                                             `The upper limit must be a positive number and must also be greater than the lower limit. The command was not accepted.`, // текст сообщения
@@ -496,7 +444,7 @@ async function incominCommandFromUser_service() {
 
                                     // отправляем сообщение клиенту с обновленными данными
                                     global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                                        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                                        connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
                                         incoming_chatID, // id пользователя
                                         "", // Название проекта
                                         `You have set an upper limit:  `, // текст сообщения
@@ -521,7 +469,7 @@ async function incominCommandFromUser_service() {
             // установка нижнего лимита
             case 3: {
                 try {
-                    await connection_to_telegramBot___BTC_USD_signal.sendMessage(
+                    await connection_to_telegramBot___BTC_USD_signal_pr0002.sendMessage(
                         incoming_chatID,
                         'Enter lower limit:',
                         // третьим параметром вводим параметр:
@@ -537,7 +485,7 @@ async function incominCommandFromUser_service() {
                             console.log(userAnswer);
 
                             // Дальнейшее выполнение кода будет после ответа пользователя
-                            await connection_to_telegramBot___BTC_USD_signal.onReplyToMessage(
+                            await connection_to_telegramBot___BTC_USD_signal_pr0002.onReplyToMessage(
                                 incoming_chatID,
                                 userAnswer.message_id, // это ID чата, на которое бот ожидает ответ
                                 (userAnswer) => {
@@ -549,7 +497,7 @@ async function incominCommandFromUser_service() {
                                     let validateUserNubber = validation_andRerurn_InputNumber(userAnswer.text);
                                     if (validateUserNubber == null) {
                                         global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                                            connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                                            connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
                                             incoming_chatID, // id пользователя
                                             "", // Название проекта
                                             `The entered value is not a valid number, the command was not accepted`, // текст сообщения
@@ -564,7 +512,7 @@ async function incominCommandFromUser_service() {
                                     validateUserNubber = validation_inputBottomLimit(incoming_chatID, validateUserNubber);
                                     if (validateUserNubber == null) {
                                         global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                                            connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                                            connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
                                             incoming_chatID, // id пользователя
                                             "", // Название проекта
                                             `The upper limit must be a positive number and must also be less than the lower limit. The command was not accepted.`, // текст сообщения
@@ -601,7 +549,7 @@ async function incominCommandFromUser_service() {
 
                                     // отправляем сообщение клиенту с обновленными данными
                                     global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                                        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                                        connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
                                         incoming_chatID, // id пользователя
                                         "", // Название проекта
                                         `You have set an lower limit: ` + validateUserNubber.toLocaleString('ru-RU'), // текст сообщения
@@ -641,7 +589,7 @@ async function incominCommandFromUser_service() {
                     const signalNubmer = varrsAndData_pr0002.usersReestrTelegram[incoming_chatID].signal_params;
 
                     global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                        connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
                         incoming_chatID, // id пользователя
                         "", // Название проекта
                         'Signal settings have been changed: ' + varrsAndData_pr0002.signalNames[signalNubmer], // текст сообщения
@@ -671,7 +619,7 @@ async function incominCommandFromUser_service() {
                     const anwerToAdmin = getStatistic_sortActivUsers_last__1_day();
 
                     global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+                        connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
                         incoming_chatID, // id пользователя
                         "", // Название проекта
                         anwerToAdmin, // текст сообщения
@@ -691,7 +639,7 @@ async function incominCommandFromUser_service() {
                 try {
                     // если команда не распознана, просто обновляем клавиатуру
                     await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-                        connection_to_telegramBot___BTC_USD_signal, // текущее соединение к боту
+                        connection_to_telegramBot___BTC_USD_signal_pr0002, // текущее соединение к боту
                         incoming_chatID, // JD клиента
                         "", // ID номер проекта
                         `Use the buttons to enter parameters.`, // ntrcn
@@ -709,32 +657,6 @@ async function incominCommandFromUser_service() {
 incominCommandFromUser_service();
 
 
-// сообщение себе в InfoTelegramBot
-try {
-    /* 
-        await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-            connection_to_telegramBot___BTC_USD_signal,
-            // connection_to_my_InfoTelegramBot,
-            config_pr0002.adminTelegramAccount_ID_pr0002,
-            config_pr0002.projectNameID + "     " + config_pr0002.commentNameCurrentProject, // Название проекта
-            "Сервер pr0002 Запущен", // текст сообщения
-            varrsAndData_pr0002.emodziListTelegram_pr0002.defaul_currentProjectEmodzi //емодзи из переменной, из списка 
-        );
-    */
-    /*     
-        await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-            connection_to_telegramBot___BTC_USD_signal,
-            // connection_to_my_InfoTelegramBot,
-            config_pr0002.adminTelegramAccount_ID_pr0002,
-            config_pr0002.projectNameID + "     " + config_pr0002.commentNameCurrentProject, // Название проекта
-            "Это пример моего сообщения", // текст сообщения
-            null //емодзи из переменной, из списка 
-        );
-     */
-} catch (error) {
-    console.log("Ошибка отправки сообщения Telegram");
-    console.log(error);
-}
 
 function identification_inIncomingButtonComsnd(msg) {
     // эта функция проверяет, есть ли во входящем сообщении команда, переданная нажатием кнопки бота
@@ -792,7 +714,6 @@ function validation_inputTopLimit(user_ID, inputData) {
         console.log('validation_inputTopLimit, inputData= ' + inputData);
         console.log('varrsAndData_pr0002.usersReestrTelegram[user_ID].bottomLimit_currentClient= ' + varrsAndData_pr0002.usersReestrTelegram[user_ID].bottomLimit_currentClient);
 
-
         if (
             // допустимые варианты
             // либо мы сбросили на ноль
@@ -833,8 +754,6 @@ function validation_inputBottomLimit(user_ID, inputData) {
     }
 }
 
-
-
 // эта функция записывает минимальную и максимальную цену за период временя во время потока от вебсокета
 function resetPrisePreviousInterval(inputPrice) {
     varrsAndData_pr0002.slideData.currentPrice = inputPrice;
@@ -871,7 +790,7 @@ function resetPrisePreviousInterval(inputPrice) {
 
 function alertTopSingle(user_ID, maxIntervalPrice) {
     global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+        connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
         user_ID, // id пользователя
         "", // Название проекта
         'ATTENTION !  The price has exceeded your limit and reached  ' + maxIntervalPrice.toLocaleString('ru-RU') + " BTC/USD", // текст сообщения
@@ -882,7 +801,7 @@ function alertTopSingle(user_ID, maxIntervalPrice) {
 
 function alertBottomSingle(user_ID, minIntervalPrice) {
     global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+        connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
         user_ID, // id пользователя
         "", // Название проекта
         'ATTENTION !  The price dropped to the established minimum and amounted to ' + minIntervalPrice.toLocaleString('ru-RU') + " BTC/USD", // текст сообщения
@@ -893,7 +812,7 @@ function alertBottomSingle(user_ID, minIntervalPrice) {
 
 function alertTopRepeat(user_ID, maxIntervalPrice) {
     global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+        connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
         user_ID, // id пользователя
         "", // Название проекта
         'ATTENTION !  Price increased to ' + maxIntervalPrice.toLocaleString('ru-RU') + " BTC/USD", // текст сообщения
@@ -904,7 +823,7 @@ function alertTopRepeat(user_ID, maxIntervalPrice) {
 
 function alertBottomRepeat(user_ID, minIntervalPrice) {
     global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.myMessegesToCurrentTelegramBot(
-        connection_to_telegramBot___BTC_USD_signal, // соединение с текущим ботом
+        connection_to_telegramBot___BTC_USD_signal_pr0002, // соединение с текущим ботом
         user_ID, // id пользователя
         "", // Название проекта
         'ATTENTION !  Price dropped to ' + minIntervalPrice.toLocaleString('ru-RU') + " BTC/USD", // текст сообщения
