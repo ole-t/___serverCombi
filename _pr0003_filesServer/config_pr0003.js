@@ -36,11 +36,11 @@ const config_pr0003 = {
 
     timeSaveCashData: 10000,  // 60000, // время актуальности данных в Кеше, ставим 10 мин.
     // лимиты по умолчанию, могут быть перезаписаны данными из файла CMS при скачивании
-    maxTotalSpaceInServerForFiles: 1000000,    //  5000000000, // максимальное место на сервере для хранения файлов - 5Гбт
+    maxTotalSpaceInServerForFiles: 1000000000,    //  5000000000, // максимальное место на сервере для хранения файлов - 5Гбт
     periodAlerts_totalSpaceDisk: 3600000, // раз в час проверять и отправлять при необх сообщения
 
     default_limits_forOneUser: {
-        defaultFreeSpaceForFiles_forOneUser: 50000000, // выделенное по умолчанию бесплатное место для хранения файлов - 50Мбт
+        defaultFreeSpaceForFiles_forOneUser: 100000000, // выделенное по умолчанию бесплатное место для хранения файлов - 50Мбт
         maxSizeSingleFile: 10000000,
     },
 
