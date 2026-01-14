@@ -41,7 +41,7 @@ const config_pr0003 = {
 
     default_limits_forOneUser: {
         defaultFreeSpaceForFiles_forOneUser: 100000000, // выделенное по умолчанию бесплатное место для хранения файлов - 50Мбт
-        maxSizeSingleFile: 10000000,
+        maxSizeSingleFile: 200000000,
     },
 
 
