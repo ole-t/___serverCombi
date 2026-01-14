@@ -10,9 +10,9 @@ const router_pr0002 = new Router(); // этот код работает такж
 
 // router_pr0002.post('/GoogleAuth_01', ()=>{
 router_pr0002.post('*', () => {
-    console.log(" ");
-    console.log("+++ Пришел запрос на роутер pr0002");
-    console.log(" ");
+    // console.log(" ");
+    // console.log("+++ Пришел запрос на роутер pr0002");
+    // console.log(" ");
 });
 
 //========================

@@ -1,9 +1,9 @@
 
-
 import path from 'path';
 import mongoose from "mongoose";
 import { GridFSBucket, ObjectId } from 'mongodb';
 import fs from 'fs';
+import { promises as promises_fs } from 'fs'; // нужно для фсинхронных функций при пработе с файлами и папками
 import { Readable } from 'stream';
 import zlib from 'zlib'; // для сжатия данных
 import util from 'util'; // берем из библиотеки NodeJS - используем для ожидания загрузки файла из сети, в нашем случ из МонгоДБ
@@ -11,121 +11,280 @@ import util from 'util'; // берем из библиотеки NodeJS - исп
 import TelegramBot from 'node-telegram-bot-api';
 import global_Data_forAllProjects from './global_Data_forAllProjects.js';
 
+import dns from 'dns'; // нужно для контроля соединения с Монго ДБ 
 
-export default class global_Functions_and_Servises_forAll_Projects {
+// на случай проблем с DNS Atlas
+dns.setServers(['8.8.8.8', '1.1.1.1']);
 
+export const global_Functions_and_Servises_forAll_Projects = {
 
-    static get_valid_adress_fileOrFolder(absPathToFile) {
-        try {
-            // см. инфо тут: https://nodejs.org/api/path.html
-            // Тут получаем откорректированный путь от корневого диска компьютера, на входе передаем относительный путь от места вызова до целевого файла
-            let path_normalize = path.normalize(absPathToFile);
-            return path_normalize;
-        } catch (error) {
-            console.log("Ошибка из get_valid_adress_fileOrFolder:");
-            console.log(error);
-            return null;
-        }
-    }
-
-    static random_id() {
+    random_id() {
         let dateNow = Date.now();
         let rndmNumb = Math.floor(Math.random() * 1000000000);
         let rndmSum = dateNow + '_' + rndmNumb;
         return (rndmSum);
-    }
-
+    },
 
     // =========================
     // =========================
     // =========================
 
-    static files_loadAndSave_service = class {
+    files_loadAndSave_service: {
 
-
-        static loadLocalFile(
-            myNameID_ActualProject, // имя_ID проекта
-            local_files_forder_Adress, // адрес расположеия файлов проекта, без имени файла
-            fileName // имя файла
-        ) {
-            // console.log("myNameID_ActualProject= " + myNameID_ActualProject);
-            // console.log("local_files_forder_Adress= " + local_files_forder_Adress);
-            // console.log("fileName= " + fileName);
-
+        get_valid_adress_fileOrFolder(absPathToFile) {
             try {
-                const pathNameID = global_Functions_and_Servises_forAll_Projects.get_valid_adress_fileOrFolder(local_files_forder_Adress + fileName);
+                // см. инфо тут: https://nodejs.org/api/path.html
+                // Тут получаем откорректированный путь от корневого диска компьютера, на входе передаем относительный путь от места вызова до целевого файла
+                let path_normalize = path.normalize(absPathToFile);
+                return path_normalize;
+            } catch (error) {
+                // console.log("Ошибка из get_valid_adress_fileOrFolder:");
+                // console.log(error);
+                return null;
+            }
+        },
+
+        async createDir_andAll_intermediateDirectories(fullPath) {
+            // Эта фун создает папок и все промежуточные директории
+            // console.log(" ");
+            // console.log("ЗАПУСК createDir_andAll_intermediateDirectories");
+
+            return await new Promise(async (resolve, reject) => {
+                try {
+
+                    let validationFullPath = global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.get_valid_adress_fileOrFolder(fullPath);
+
+                    // console.log(" ");
+                    // console.log("validationFullPath = " + validationFullPath);
+                    try {
+                        // Создаём папки асинхронно (вместе с промежуточными)
+                        fs.mkdir(validationFullPath, { recursive: true }, (err) => {
+                            if (err) {
+                                console.error("Ошибка в fs.mkdir:", err);
+
+                                validationFullPath = null;
+                                return resolve(validationFullPath);
+                            }
+                            else {
+                                // console.log(" ");
+                                // console.log("Папка создана или уже существовала: " + validationFullPath);
+                                resolve(validationFullPath);
+                            }
+                        });
+                    } catch (error) {
+                        console.error("Ошибка создания папок в fs.mkdir:");
+                        console.error(error);
+
+                        validationFullPath = null;
+                        return resolve(validationFullPath);
+                    }
+
+                } catch (error) {
+                    console.error("Ошибка при создании папки: " + error);
+
+                    validationFullPath = null;
+                    return resolve(validationFullPath);
+                }
+            });
+        },
+
+        // Новый вариант без лишних промисов от chatGPT
+        async loadLocalFile(
+            myNameID_ActualProject, // имя_ID проекта
+            local_files_forder_Adress, // адрес расположения файлов проекта, без имени файла
+            file_Name // имя файла
+        ) {
+            try {
+                const pathNameID = global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service
+                    .get_valid_adress_fileOrFolder(local_files_forder_Adress + file_Name);
+
+                if (!fs.existsSync(pathNameID)) {
+                    console.log(`\n${myNameID_ActualProject}: Файл не найден: ${file_Name}`);
+                    return null;
+                }
+
                 let data = fs.readFileSync(pathNameID, 'utf8');
                 if (data) {
                     data = JSON.parse(data);
                 }
-                console.log(myNameID_ActualProject + ": Был успешно прочитан " + fileName);
+
+                // console.log(`\n${myNameID_ActualProject}: Был успешно прочитан ${file_Name}`);
                 return data;
+
             } catch (error) {
-                console.log(myNameID_ActualProject + ": Ошибка чтения файла " + fileName);
-                // console.log(error);
+                console.log(`\n${myNameID_ActualProject}: Ошибка чтения файла ${file_Name}`);
+                console.log(error);
                 return null;
             }
-        }
+        },
 
 
-        static async saveLocalFile(
+        // Старый вариант
+        /* 
+                 async loadLocalFile(
+                    myNameID_ActualProject, // имя_ID проекта
+                    local_files_forder_Adress, // адрес расположения файлов проекта, без имени файла
+                    file_Name // имя файла
+                ) {
+                    return new Promise((resolve, reject) => {
+                        try {
+                            const pathNameID = global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service
+                                .get_valid_adress_fileOrFolder(local_files_forder_Adress + file_Name);
+        
+                            if (!fs.existsSync(pathNameID)) {
+                                console.log("\n" + myNameID_ActualProject + ": Файл не найден: " + file_Name);
+                                return resolve(null);
+                            }
+        
+                            let data = fs.readFileSync(pathNameID, 'utf8');
+                            if (data) {
+                                data = JSON.parse(data);
+                            }
+        
+                            // console.log("\n" + myNameID_ActualProject + ": Был успешно прочитан " + file_Name);
+                            return resolve(data);
+        
+                        } catch (error) {
+                            console.log("\n" + myNameID_ActualProject + ": Ошибка чтения файла " + file_Name);
+                            console.log(error);
+                            return resolve(null);
+                        }
+                    });
+                }
+         */
+
+        // Новый вариант от ChatGPT 02.11.2025
+        async saveLocal_JSON_file(
             data, // данные
             myNameID_ActualProject, // имя_ID проекта
-            local_files_forder_Adress, // адрес расположеия файлов проекта, без имени файла
-            fileName // имя файла
+            local_files_forder_Adress, // адрес расположения файлов проекта, без имени файла
+            file_Name // имя файла
         ) {
-            return new Promise(async (resolve, reject) => {
-                try {
-                    let pathNameID = global_Functions_and_Servises_forAll_Projects.get_valid_adress_fileOrFolder(local_files_forder_Adress + fileName);
-                    fs.writeFileSync(pathNameID, JSON.stringify(data));
-                    // console.log(myNameID_ActualProject + ": Был успешно сохранен " + fileName);
-                    resolve(myNameID_ActualProject + ": Был успешно сохранен " + fileName);
-                } catch (error) {
-                    console.log("Ошибка сохранения файла " + fileName);
-                    console.log(error);
-                    resolve(null); // ВАЖНО! Возвращаем "resolve" вместо "reject" - при получении результата в вызывающей функции обработать этот ответ
-                }
-            })
-        }
+            try {
+                const fullFilePath = global_Functions_and_Servises_forAll_Projects
+                    .files_loadAndSave_service
+                    .get_valid_adress_fileOrFolder(path.join(local_files_forder_Adress, file_Name));
 
-        static async firstLoad_oneFileData_fromLocalDiskOrMongoDB(
-            myNameID_ActualProject, // имя_ID проекта
+                // создаём папку и все промежуточные директории
+                const pathSaveFile = await global_Functions_and_Servises_forAll_Projects
+                    .files_loadAndSave_service
+                    .createDir_andAll_intermediateDirectories(local_files_forder_Adress);
+
+                if (!pathSaveFile) {
+                    console.log("\nОшибка: не удалось создать путь папки на диске для " + file_Name);
+                    return null;
+                }
+
+                // сохраняем файл на диск
+                await fs.promises.writeFile(fullFilePath, JSON.stringify(data, null, 2)); // с форматированием для читаемости
+
+                // проверяем успешность записи
+                try {
+                    await fs.promises.access(fullFilePath, fs.constants.F_OK | fs.constants.W_OK);
+                    return ("Файл " + file_Name + " успешно сохранён на диск");
+                } catch {
+                    console.log(`Ошибка: файл "${file_Name}" не существует или недоступен для записи после сохранения`);
+                    return null;
+                }
+
+            } catch (error) {
+                console.log(`Ошибка сохранения файла "${file_Name}":`, error);
+                return null;
+            }
+        },
+
+
+        // Старый вариант
+        /* 
+                 async saveLocal_JSON_file(
+                    data, // данные
+                    myNameID_ActualProject, // имя_ID проекта
+                    local_files_forder_Adress, // адрес расположеия файлов проекта, без имени файла
+                    file_Name // имя файла
+                ) {
+                    return new Promise(async (resolve, reject) => {
+                        try {
+                            let pathNameID = global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.get_valid_adress_fileOrFolder(local_files_forder_Adress + file_Name);
+        
+                            // контролируем наличие нужного пути на диске для скачивания файла
+                            let pathSaveFile = await global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.createDir_andAll_intermediateDirectories(local_files_forder_Adress);
+                            if (!pathSaveFile) {
+                                console.log(" ");
+                                console.log("Ошибка при попытке создать путь папки на диске при резервном копировании");
+                                return resolve(null);
+                            }
+        
+                            // сохраняем файл на диск
+                            // fs.writeFileSync(pathNameID, JSON.stringify(data));
+                            // ✅ Асинхронная запись, не блокирует event loop
+                            await fs.promises.writeFile(pathNameID, JSON.stringify(data));
+        
+        
+                            // console.log(myNameID_ActualProject + ": Был успешно сохранен " + file_Name);
+                            resolve(myNameID_ActualProject + ": Был успешно сохранен " + file_Name);
+                        } catch (error) {
+                            console.log("Ошибка сохранения файла " + file_Name);
+                            console.log(error);
+                            resolve(null); // ВАЖНО! Возвращаем "resolve" вместо "reject" - при получении результата в вызывающей функции обработать этот ответ
+                        }
+                    })
+                }
+                 */
+
+
+        async firstLoad_oneFileData_fromLocalDiskOrMongoDB(
+            myNameID_ActualProject, // имя_ID проекта 
             connectionToMongo_actualProject, // соединение к необходимой БД Монго
             local_files_forder_Adress,  // адрес расположеия файлов проекта, без имени файла
-            fileName, // имя файла
+            file_Name, // имя файла
         ) {
+
+            console.log(" ");
+            // console.log("Запуск firstLoad_oneFileData_fromLocalDiskOrMongoDB, arguments=  ");
+            // console.log(arguments);
+
             // ВАЖНО - названия переменных совпадают с названием файла, за исключением расширенияя
             return new Promise(async (resolve, reject) => {
                 // извлекаем название файла без учета расширения, до точки
-                const combiNameFile = (myNameID_ActualProject ? (myNameID_ActualProject + "=====") : "") + fileName.split('.')[0];
+                const combiNameFile = (myNameID_ActualProject ? (myNameID_ActualProject + "=====") : "") + file_Name.split('.')[0];
 
                 try {
-                    const loadData = global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.loadLocalFile(
+                    const loadData = await global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.loadLocalFile(
                         myNameID_ActualProject,
                         local_files_forder_Adress,
-                        fileName
+                        file_Name
                     );
-                    // console.log("qqq= "+qqq);
-                    if (loadData) resolve(loadData);
+                    // console.log("loadData= " + loadData);
+
+                    if (loadData) return resolve(loadData);
+
                     else {
                         // иначе пытаемся скачать резервированную копию с МонгоДБ
                         // проверяем, не было ли предыдущейй неудачной попытки скачать файл с МонгоДБ
                         if (!global_Data_forAllProjects.firstDownloadListFromMongoDB.has(combiNameFile)) {
-                            console.log("=== НЕ УДАЛОСЬ ПРИ ЗАПУСКЕ ПРОЧИТАТЬ ЛОКАЛЬНЫЙ ФАЙЛ, пытаемся скачать с Монго: " + fileName);
+
+                            console.log(" ");
+                            console.log("= = = = = = = НЕ УДАЛОСЬ ПРИ ЗАПУСКЕ ПРОЧИТАТЬ ЛОКАЛЬНЫЙ ФАЙЛ, пытаемся скачать с Монго: " + file_Name);
+
                             global_Data_forAllProjects.firstDownloadListFromMongoDB.add(combiNameFile);
-                            let successfullyLoadedFileFromMongo = await global_Functions_and_Servises_forAll_Projects.mongoDB_accessAndService_forAllProjects.import_AndDecompressed_AndSave_ZIP_File_FromMongoDB(
+
+                            let res_import_AndDecompressed_AndSave_ZIP_File_FromMongoDB = await global_Functions_and_Servises_forAll_Projects.mongoDB_accessAndService_forAllProjects.import_AndDecompressed_AndSave_ZIP_File_FromMongoDB(
                                 myNameID_ActualProject,
                                 connectionToMongo_actualProject,
                                 local_files_forder_Adress,
-                                fileName
+                                file_Name
                             );
+
+                            console.log(" ");
+                            console.log("res_import_AndDecompressed_AndSave_ZIP_File_FromMongoDB= " + res_import_AndDecompressed_AndSave_ZIP_File_FromMongoDB);
+
                             // затем, после попытки скачать резервный файл из МонгоДБ на локальный диск, пытаемся повторно произвести чтение с локального диска
                             try {
                                 const importData = await global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.firstLoad_oneFileData_fromLocalDiskOrMongoDB(
                                     myNameID_ActualProject,
                                     connectionToMongo_actualProject,
                                     local_files_forder_Adress,
-                                    fileName,
+                                    file_Name,
                                 );
                                 if (importData) resolve(importData);
                                 else resolve(null);
@@ -139,332 +298,504 @@ export default class global_Functions_and_Servises_forAll_Projects {
                         }
                     }
                 } catch (error) {
-                    console.log("=== СРАБОТАЛ catch files_loadAndSave_service.firstLoad_oneFileData_fromLocalDiskOrMongoDB !!!!!: ");
-                    console.log(error);
+                    // console.log("=== СРАБОТАЛ catch files_loadAndSave_service.firstLoad_oneFileData_fromLocalDiskOrMongoDB !!!!!: ");
+                    // console.log(error);
                     resolve(null);
                 }
             })
-        }
-
-    }
+        },
+    },
 
     // =========================
     // =========================
     // =========================
 
-    static mongoDB_accessAndService_forAllProjects = class {
+    mongoDB_accessAndService_forAllProjects: {
 
-        static async connectToMongoDB(myNameID_ActualProject, mongoURL_actualProject) {
-            return new Promise(async (resolve, reject) => {
-                let connectionToMongo_actualProject;
+        async connectToMongoDB(myNameID_ActualProject, mongoURL_actualProject) {
+            let connection = null;
+            let isConnecting = false;
+
+            const connectWithRetry = async () => {
+                if (isConnecting) return;
+                isConnecting = true;
+
                 try {
-                    connectionToMongo_actualProject = mongoose.createConnection(mongoURL_actualProject, {
+                    connection = mongoose.createConnection(mongoURL_actualProject, {
                         useNewUrlParser: true,
                         useUnifiedTopology: true,
-                        //  strictQuery: false, // это добавлено по рекомендациям монгус в консоли после запуска сервера
+                        serverSelectionTimeoutMS: 10000,
+                        connectTimeoutMS: 10000,
                     });
-                    // запускаем процесс отслеживания событий подключением к МонгоДБ
-                    mControlMongooseConnection(connectionToMongo_actualProject);
-                    // важно!  resolve отсюда переместили в обработчик события actualConnectionToMongo.on, поскольку нам нужно дождаться соединения, и только потом озвратить из промиса установленное соединение
-                    // resolve(connectionToMongo_actualProject);
 
+                    // 💡 Ждём фактического подключения
+                    await new Promise((resolve, reject) => {
+                        connection.once('connected', () => {
+                            // console.log(`${myNameID_ActualProject} - Mongoose подключен`);
+                            isConnecting = false;
+                            resolve();
+                        });
+
+                        connection.once('error', (err) => {
+                            isConnecting = false;
+                            // reject(err);
+                            resolve(err);
+                        });
+                    });
+
+                } catch (err) {
+                    console.error(`${myNameID_ActualProject} - Ошибка подключения:`, err);
+                    isConnecting = false;
+                    setTimeout(connectWithRetry, 5000);
                 }
-                catch (error) {
-                    console.log(myNameID_ActualProject + ' -Ошибка подсоединения к МонгоДБ из connectToMongoDB');
-                    console.log(error);
-                    resolve(null);
+            };
+
+            await connectWithRetry();
+            return connection;
+        },
+        // Старый вариант
+        /* 
+                 async connectToMongoDB(myNameID_ActualProject, mongoURL_actualProject) {
+                    let connection;
+            
+                    // Это вариант от  16-17.10.2025, откорректированный с чатом GPT
+                    const connectWithRetry = () => {
+                        console.log(`${myNameID_ActualProject} - попытка подключения к MongoDB...`);
+            
+                        try {
+        
+                            connection = mongoose.createConnection(mongoURL_actualProject, {
+                                useNewUrlParser: true,
+                                useUnifiedTopology: true,
+                                serverSelectionTimeoutMS: 10000, // максимум 10 секунд на попытку
+                                connectTimeoutMS: 10000,
+                            });
+            
+                            connection.on('connected', () => {
+                                console.log(`${myNameID_ActualProject} - Mongoose подключен к MongoDB`);
+                            });
+            
+                            connection.on('disconnected', () => {
+                                console.warn(`${myNameID_ActualProject} - Mongoose потерял соединение, новая попытка через 5 сек...`);
+                                setTimeout(connectWithRetry, 5000);
+                            });
+            
+                            connection.on('error', (err) => {
+                                console.error(`${myNameID_ActualProject} - Ошибка подключения Mongoose:`, err.message);
+            
+                                // Отлавливаем DNS-ошибки и таймауты
+                                if (err.code === 'ETIMEOUT' || err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
+                                    console.log(`${myNameID_ActualProject} - DNS/сетевой сбой, повторная попытка через 5 секунд...`);
+                                    connection.removeAllListeners();
+                                    setTimeout(connectWithRetry, 5000);
+                                    return;
+                                }
+            
+                                // Прочие ошибки просто логируем
+                                console.log(`${myNameID_ActualProject} - Непредвиденная ошибка, сервер продолжает работу`);
+                            });
+            
+                            connection.on('reconnected', () => {
+                                console.log(`${myNameID_ActualProject} - Mongoose переподключен к MongoDB`);
+                            });
+            
+                            connection.on('close', () => {
+                                console.warn(`${myNameID_ActualProject} - Соединение закрыто`);
+                            });
+                        } catch (err) {
+                            // На случай, если ошибка вылетела синхронно (редко, но бывает)
+                            console.error(`${myNameID_ActualProject} - Исключение при попытке подключения:`, err);
+                            setTimeout(connectWithRetry, 5000);
+                        }
+                    };
+            
+                    // первая попытка
+                    connectWithRetry();
+            
+                    // возвращаем "живой" объект (он сам будет обновляться при переподключении)
+                    return connection;
                 }
+         */
 
-                function mControlMongooseConnection(actualConnectionToMongo) {
-                    // тут отслеживаем состояние подключение к монгус
-                    actualConnectionToMongo.on('connected', () => {
-                        // важно!  resolve переместили сюда, поскольку нам нужно дождаться соединения, и только потом озвратить из промиса установленное соединение
-                        resolve(connectionToMongo_actualProject);
-                        console.log(myNameID_ActualProject + ' -Mongoose подключен к MongoDB');
-                    })
-
-                    actualConnectionToMongo.on('disconnected', () => {
-                        console.log(myNameID_ActualProject + ' -Mongoose потерял соединение с MongoDB');
-                    })
-
-                    actualConnectionToMongo.on('reconnected', () => {
-                        console.log(myNameID_ActualProject + ' -Mongoose переподключен к MongoDB');
-                    })
-
-                    actualConnectionToMongo.on('error', (err) => {
-                        console.error(myNameID_ActualProject + ' -Ошибка подключения Mongoose: ', err);
-                    })
-
-                    actualConnectionToMongo.on('close', () => {
-                        console.log(myNameID_ActualProject + ' -Соединение с MongoDB было закрыто');
-                    })
-                }
-            })
-        }
-
-
-        static async export_And_ZIP_LocalFile_ToMongoDB(
+        async export_And_ZIP_LocalFile_ToMongoDB(
             myNameID_ActualProject, // имя_ID проекта
             connectionToMongo_actualProject, // соединение к необходимой БД Монго
             local_files_forder_Adress, // адрес расположеия файлов проекта, без имени файла
-            fileName //  имя файла
+            file_Name // имя файла
         ) {
             return new Promise(async (resolve, reject) => {
                 try {
-                    const fileNameAndAdress = global_Functions_and_Servises_forAll_Projects.get_valid_adress_fileOrFolder(local_files_forder_Adress + fileName);
+                    const fileNameAndAdress = global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.get_valid_adress_fileOrFolder(local_files_forder_Adress + file_Name);
 
                     // Проверка на существование файла
                     if (!fs.existsSync(fileNameAndAdress)) {
-                        console.log(`Ошибка в export_And_ZIP_LocalFile_ToMongoDB - Файл ${fileNameAndAdress} не найден`);
-                        resolve(null); // Выходим, если файл не найден
+                        // console.log(`Ошибка в export_And_ZIP_LocalFile_ToMongoDB - Файл ${fileNameAndAdress} не найден`);
+                        return resolve(null); // Выходим, если файл не найден
                     }
 
                     // Предварительно удаляем одноименный файл с МонгоДБ
                     await global_Functions_and_Servises_forAll_Projects.mongoDB_accessAndService_forAllProjects.deleteFiles_FromMongoDB(
                         connectionToMongo_actualProject,
-                        fileName
+                        file_Name
                     );
                     // console.log(myNameID_ActualProject + ": Предыдущий файл (файлы) при его наличии был удален, начинаем закачку нового файла");
 
                     const bucket = new GridFSBucket(connectionToMongo_actualProject.db, {
                         // bucketName: 'dataFromLocalFile'
-                        bucketName: 'mBuket_' + fileName + "_ZIP"
+                        bucketName: 'mBuket_' + file_Name + "_ZIP"
                     });
                     // Запись файла в GridFS
-                    const uploadStream = bucket.openUploadStream(fileName + "_ZIP");
-
+                    const uploadStream = bucket.openUploadStream(file_Name + "_ZIP");
+                    uploadStream.on('error', (error) => {
+                        console.error('Ошибка в uploadStream:', error);
+                        return resolve(null);
+                    });
 
                     // Создание потока чтения из файла
                     const readStream = fs.createReadStream(fileNameAndAdress);
+                    readStream.on('error', () => {
+                        console.error('Ошибка в readStream:', error);
+                        return resolve(null);
+                    });
 
                     // Создание потока сжатия данных с помощью gzip
                     const gzip = zlib.createGzip();
+                    gzip.on('error', () => {
+                        console.error('Ошибка в gzip:', error);
+                        return resolve(null);
+                    });
 
-                    // Связываем потоки: readStream -> gzip -> uploadStream (GridFS)
+                    // Связываем потоки: readStream -> gzip -> uploadStream (GridFS)    
                     readStream.pipe(gzip).pipe(uploadStream);
                     uploadStream.on('finish', () => {
-                        // console.log(myNameID_ActualProject + ': File ' + fileName + ' was successfully  compressed and uploaded to GridFS!');
-                        resolve('export_And_ZIP_LocalFile_ToMongoDB - ok');
+                        // console.log(myNameID_ActualProject + ': File ' + file_Name + ' was successfully  compressed and uploaded to GridFS!');
+                        return resolve('export_And_ZIP_LocalFile_ToMongoDB - ok');
                     });
-                    uploadStream.on('error', (error) => {
-                        console.error('Error File uploading:', error);
-                        resolve(null);
-                    });
+
+
+                    // Таймаут защиты от зависания: если загрузка не закончилась зауказанное время — считаем ошибкой                  
+                    const timeoutProtect = setTimeout(() => {
+                        console.log("Ошибка сохранения файла в Монго ДБ: " + { myNameID_ActualProject });
+                        return resolve(null);
+                    }, 7200000);
+                    // Сброс таймаута при finish / error
+                    uploadStream.on('finish', () => clearTimeout(timeoutProtect));
+                    uploadStream.on('error', () => clearTimeout(timeoutProtect));
 
                 } catch (error) {
                     console.log(myNameID_ActualProject + ': Ошибка в export_And_ZIP_LocalFile_ToMongoDB');
                     console.log(error);
-                    resolve(null);
+                    return resolve(null);
                 }
             })
-        }
+        },
 
-
-        static async import_AndDecompressed_AndSave_ZIP_File_FromMongoDB(
+        // Новый вариант от chatGPT, НЕ ПРОВЕРЕННЫЙ 
+        async import_AndDecompressed_AndSave_ZIP_File_FromMongoDB(
             myNameID_ActualProject,
             connectionToMongo_actualProject,
             local_files_forder_Adress,
-            fileName
+            file_Name
         ) {
-            // Тут дополнительно реализуем функцонал ожидания окончания заказчки. Для этого разбиваем код на подфункции, используем промисы
-            return new Promise(async (resolve, reject) => {
-                try {
-                    const fileNameAndAdress = global_Functions_and_Servises_forAll_Projects.get_valid_adress_fileOrFolder(
-                        local_files_forder_Adress + fileName
-                        // + "---QWEqwe"
+            try {
+                const fileNameAndAdress =
+                    global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.get_valid_adress_fileOrFolder(
+                        local_files_forder_Adress + file_Name
                     );
-                    // Создаем экземпляр GridFSBucket
-                    const bucket = new GridFSBucket(connectionToMongo_actualProject.db, {
-                        bucketName: 'mBuket_' + fileName + "_ZIP"
-                    });
 
-                    // определяем id нужного файла в монгоДБ
-                    const fined_FilesInMongoDB = connectionToMongo_actualProject.db.collection('mBuket_' + fileName + "_ZIP" + ".files").find({ filename: fileName + "_ZIP" }); // параметр ".files" добавляется автоматически в МонгоДБ
-
-                    // Если найден файл
-                    if (await fined_FilesInMongoDB.hasNext()) {
-
-                        const fined_ID_FilesInMongoDB = (await fined_FilesInMongoDB.next())._id; // ВАЖНО соблюдать синтаксис круглых скобок в сочетании с await
-                        // преобразуем ID в указателб на файл в МонгоДБ
-                        const fileObjectId = new ObjectId(fined_ID_FilesInMongoDB);
-
-                        // Функция для загрузки файла
-                        async function mSubfun_downloadFile() {
-                            // Открываем поток для чтения файла из GridFS
-                            const downloadStream = bucket.openDownloadStream(mongoose.Types.ObjectId(fileObjectId));
-                            // Создаем поток для записи в файл после распаковки
-                            const writeStream = fs.createWriteStream(fileNameAndAdress);
-                            // Используем zlib для распаковки
-                            const unzip = zlib.createGunzip();
-                            // Чтение из GridFS -> распаковка -> запись в файл
-                            downloadStream
-                                .pipe(unzip)  // Распаковка данных
-                                .pipe(writeStream)  // Запись в файл
-                                // Обработка событий                   
-                                .on('finish', () => {
-
-                                    console.log('File successfully downloaded and decompressed')
-                                    resolve('import_AndDecompressed_AndSave_ZIP_File_FromMongoDB --- successfully');
-                                })
-                                .on('error', (error) => {
-                                    console.error('Error:', error);
-                                    resolve(null);
-                                })
-
-                            // Мы оборачиваем функцию mStreamFinished, которая работает с коллбэками, в Promise с пом. "promisify", чтобы можно было ждать ее завершения с помощью await
-                            await util.promisify(mStreamFinished)(writeStream);
-                        }
-
-                        // подфункция для ожидания завершения стрима
-                        // Аргумент "stream" передается видимо автоматически, когда функция вызывается из "util.promisify"
-                        function mStreamFinished(stream) {
-
-                            return new Promise((resolve, reject) => {
-                                stream.on('finish', resolve);
-                                stream.on('error', reject);
-                            });
-
-                        }
-
-                        // Это необязательно -  делаем доп проверку для предупредительного сообщения, существует ли более одного файла в МонгоДБ с таким именем
-                        if (await fined_FilesInMongoDB.hasNext()) {
-                            // тут мы перешли  уже ко второму возможному элементу объекта
-                            console.log(" ПРЕДУПРЕЖДЕНИЕ - найдено несколько файлов с именем 'fileName==='" + (fileName + "_ZIP"));
-                        }
-
-                        await mSubfun_downloadFile();
-                    }
-
-                    else {
-                        console.log("=== Не найден файл в МонгоДБ");
-                        resolve(null);
-                    }
-
-
-                } catch (error) {
-                    console.error('Ошибка в import_AndDecompressed_AndSave_ZIP_File_FromMongoDB:');
-                    console.error(error);
-                    resolve(null);
+                // Проверка подключения
+                if (connectionToMongo_actualProject.readyState !== 1) {
+                    console.error("Нет подключения к MongoDB");
+                    return null;
                 }
-            })
 
-        }
+                const bucketName = 'mBuket_' + file_Name + "_ZIP";
+                const bucket = new GridFSBucket(connectionToMongo_actualProject.db, { bucketName });
 
-        static async deleteFiles_FromMongoDB(
-            connectionToMongo_actualProject,
-            fileName
-        ) {
-            // Тут дополнительно реализуем функцонал ожидания окончания заказчки. Для этого разбиваем код на подфункции, используем промисы
-            return new Promise(async (resolve, reject) => {
-                try {
-                    // Создаем экземпляр GridFSBucket
-                    const bucket = new GridFSBucket(connectionToMongo_actualProject.db, {
-                        bucketName: 'mBuket_' + fileName + "_ZIP"
-                    });
+                const filesCollection = connectionToMongo_actualProject.db.collection(bucketName + ".files");
+                const fileDoc = await filesCollection.findOne({ filename: file_Name + "_ZIP" });
 
-                    // ВАЖНО - ожидание асинхронности в след присваивании результатов от bucket  достигается за счет оператора  toArray(): Этот метод преобразует результаты курсора в массив, а сам метод возвращает промис, который можно ожидать через await.
-                    const bucketList = await bucket.find({ filename: fileName + "_ZIP" }).toArray();
+                if (!fileDoc) {
+                    console.log("=== Не найден файл в МонгоДБ");
+                    return null;
+                }
 
-                    //  console.log("bucketList=");
-                    //  console.log(bucketList);
+                // Проверяем путь на диске
+                const pathSaveFile = await global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.createDir_andAll_intermediateDirectories(local_files_forder_Adress);
+                if (!pathSaveFile) {
+                    console.error("Ошибка при создании папки для скачивания файла");
+                    return null;
+                }
 
-                    const files_ID_list = [];
-                    // из полученного перечня файлов извлекаем ID и добавляем в отдельный массив id-номеров 
-                    bucketList.forEach((elem) => {
-                        files_ID_list.push(elem._id.toString()); // НЕ ОБЯЗАТЕЛЬНО -  преобразуем к строке 
-                    });
+                const fileObjectId = new ObjectId(fileDoc._id);
+                const downloadStream = bucket.openDownloadStream(fileObjectId);
+                const unzip = zlib.createGunzip();
+                const writeStream = fs.createWriteStream(fileNameAndAdress);
 
-                    //  console.log("files_ID_list=");
-                    //  console.log(files_ID_list);
+                // Промис для отслеживания завершения
+                const streamPromise = new Promise((resolve, reject) => {
+                    writeStream.on('finish', () => resolve('ok'));
+                    writeStream.on('error', reject);
+                    unzip.on('error', reject);
+                    downloadStream.on('error', reject);
+                });
 
-                    let counterFiles = 0;
+                // Тайм-аут для предотвращения зависания
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Timeout при загрузке файла из MongoDB")), 15000)
+                );
 
-                    await deleteFilesListFromMongoDB();
+                downloadStream.pipe(unzip).pipe(writeStream);
 
-                    async function deleteFilesListFromMongoDB() {
-                        for (const elem of files_ID_list) {
-                            // console.log("Удаляем файл с ID: " + elem);
-                            const fileObjectId = new ObjectId(elem);
-                            // Удаление из МонгоДБ
-                            try {
-                                await deleteOneFileFromMongoDB(fileObjectId);
-                            } catch (error) {
-                                console.log("Ошибка удаления файла: " + elem);
+                await Promise.race([streamPromise, timeoutPromise]);
+
+                return 'was successfully import_AndDecompressed_AndSave_ZIP_File_FromMongoDB, file_Name= ' + file_Name;
+
+            } catch (error) {
+                console.error('Ошибка в import_AndDecompressed_AndSave_ZIP_File_FromMongoDB:', error);
+                return null;
+            }
+        },
+
+        // Старый вариант
+        /* 
+                 async export_And_ZIP_LocalFile_ToMongoDB(
+                    myNameID_ActualProject, // имя_ID проекта
+                    connectionToMongo_actualProject, // соединение к необходимой БД Монго
+                    local_files_forder_Adress, // адрес расположеия файлов проекта, без имени файла
+                    file_Name // имя файла
+                ) {
+                    return new Promise(async (resolve, reject) => {
+                        try {
+                            const fileNameAndAdress = global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.get_valid_adress_fileOrFolder(local_files_forder_Adress + file_Name);
+        
+                            // Проверка на существование файла
+                            if (!fs.existsSync(fileNameAndAdress)) {
+                                // console.log(`Ошибка в export_And_ZIP_LocalFile_ToMongoDB - Файл ${fileNameAndAdress} не найден`);
+                                return resolve(null); // Выходим, если файл не найден
                             }
-                        }
-                        // console.log("Количество удаленных файлов= " + counterFiles);
-                        resolve();
-                    }
-
-                    async function deleteOneFileFromMongoDB(fileObjectId) {
-                        return new Promise((resolve, reject) => {
-                            bucket.delete(fileObjectId, (err) => {
-                                if (err) {
-                                    console.error(`Ошибка при удалении файла в МонгоДБ с ID: ${fileObjectId}`, err);
-                                    resolve(null);
-                                }
-
-                                //  console.log(`Файл с ID ${fileObjectId} удален.`);
-                                counterFiles++;
-                                resolve(null);
+        
+                            // Предварительно удаляем одноименный файл с МонгоДБ
+                            await global_Functions_and_Servises_forAll_Projects.mongoDB_accessAndService_forAllProjects.deleteFiles_FromMongoDB(
+                                connectionToMongo_actualProject,
+                                file_Name
+                            );
+                            // console.log(myNameID_ActualProject + ": Предыдущий файл (файлы) при его наличии был удален, начинаем закачку нового файла");
+        
+                            const bucket = new GridFSBucket(connectionToMongo_actualProject.db, {
+                                // bucketName: 'dataFromLocalFile'
+                                bucketName: 'mBuket_' + file_Name + "_ZIP"
                             });
-                        });
-                    }
-
-                } catch (error) {
-                    console.error('Ошибка в deleteFiles_FromMongoDB:');
-                    console.error(error);
-                    resolve(null);
+                            // Запись файла в GridFS
+                            const uploadStream = bucket.openUploadStream(file_Name + "_ZIP");
+                            uploadStream.on('error', (error) => {
+                                console.error('Ошибка в uploadStream:', error);
+                                return resolve(null);
+                            });
+        
+                            // Создание потока чтения из файла
+                            const readStream = fs.createReadStream(fileNameAndAdress);
+                            readStream.on('error', () => {
+                                console.error('Ошибка в readStream:', error);
+                                return resolve(null);
+                            });
+        
+                            // Создание потока сжатия данных с помощью gzip
+                            const gzip = zlib.createGzip();
+                            gzip.on('error', () => {
+                                console.error('Ошибка в gzip:', error);
+                                return resolve(null);
+                            });
+        
+                            // Связываем потоки: readStream -> gzip -> uploadStream (GridFS)    
+                            readStream.pipe(gzip).pipe(uploadStream);
+                            uploadStream.on('finish', () => {
+                                // console.log(myNameID_ActualProject + ': File ' + file_Name + ' was successfully  compressed and uploaded to GridFS!');
+                                return resolve('export_And_ZIP_LocalFile_ToMongoDB - ok');
+                            });
+        
+        
+                            // Таймаут защиты от зависания: если загрузка не закончилась зауказанное время — считаем ошибкой                  
+                            const timeoutProtect = setTimeout(() => {
+                                console.log("Ошибка сохранения файла в Монго ДБ: " + { myNameID_ActualProject });
+                                return resolve(null);
+                            }, 7200000);
+                            // Сброс таймаута при finish / error
+                            uploadStream.on('finish', () => clearTimeout(timeoutProtect));
+                            uploadStream.on('error', () => clearTimeout(timeoutProtect));
+        
+                        } catch (error) {
+                            console.log(myNameID_ActualProject + ': Ошибка в export_And_ZIP_LocalFile_ToMongoDB');
+                            console.log(error);
+                            return resolve(null);
+                        }
+                    })
                 }
-            })
-
-        }
+                 */
 
 
-    }
+        async deleteFiles_FromMongoDB(connectionToMongo_actualProject, file_Name) {
+            try {
+                // Создаем экземпляр GridFSBucket
+                const bucket = new GridFSBucket(connectionToMongo_actualProject.db, {
+                    bucketName: 'mBuket_' + file_Name + "_ZIP"
+                });
+
+                // Получаем список файлов
+                const bucketList = await bucket.find({ filename: file_Name + "_ZIP" }).toArray();
+
+                const files_ID_list = bucketList.map(elem => elem._id);
+
+                let counterFiles = 0;
+
+                for (const fileObjectId of files_ID_list) {
+                    try {
+                        await bucket.delete(fileObjectId);
+                        counterFiles++;
+                        // console.log(`Файл с ID ${fileObjectId} удален.`);
+                    } catch (error) {
+                        console.error(`Ошибка при удалении файла в МонгоДБ с ID: ${fileObjectId}`, error);
+                    }
+                }
+
+                // console.log("Количество удаленных файлов= " + counterFiles);
+                return counterFiles; // возвращаем количество удаленных файлов
+
+            } catch (error) {
+                console.error('Ошибка в deleteFiles_FromMongoDB:');
+                console.error(error);
+                return null;
+            }
+        },
+
+    },
 
     // =========================
     // =========================
     // =========================
 
-    static telegramBot_Servise = class {
+    telegramBot_Servise: {
 
-        static connection_to_CurrentTelegramBot(accessToken_forCurrentTelegramBot) {
+        setConnectionCurrentTelegramBot(accessToken_forCurrentTelegramBot) {
             return new TelegramBot(accessToken_forCurrentTelegramBot, { polling: true });
-        }
+        },
 
-        static listenerCurrentTelegramBot(connection_to_CurrentTelegramBot) {
+        listenerCurrentTelegramBot(connection_to_CurrentTelegramBot) {
             connection_to_CurrentTelegramBot.on('message', (msg) => {
-                console.log(msg);
+                // console.log(msg);
                 connection_to_CurrentTelegramBot.sendMessage(msg.chat.id, `Вы отправили сообщение: "${msg.text}"`);
             })
-        }
+        },
 
-        static async myMessegesToCurrentTelegramBot(
+        async messegeToCurrentTelegramBot(
             connection_to_CurrentTelegramBot, // соединение с текущим ботом
             client_telegramAccount_ID, // id пользователя
             projectNumber, // название_id проекта
             text,  // текст сообщения
-            emodzi,  //  емодзи
+            emodzi,  // емодзи
             keyBoardParams // это передаваемая клавиатура для телеграм-Бота
         ) {
+            
             return new Promise(async (resolve, reject) => {
                 try {
                     await connection_to_CurrentTelegramBot.sendMessage(
                         client_telegramAccount_ID,
-                        //  "_________________" + 
+                        // "_________________" + 
                         (emodzi ? (emodzi + "   ") : "") + projectNumber +
                         '\n' + text,
                         keyBoardParams
                     );
                     resolve();
                 } catch (error) {
-                    console.log('Ошибка в myMessegesToCurrentTelegramBot:');
+                    console.log('Ошибка в messegeToCurrentTelegramBot:');
                     console.log(error);
                     resolve();
                 }
             })
+        },
+    },
+
+    // =========================
+
+    // 🔹 Преобразует объект в массив.
+    // Каждый элемент исходного объекта превращается в объект массива,
+    // при этом исходный ключ сохраняется в поле "m_KeyConversion".
+    convert_mObjectToArray(mObj) {
+        // Преобразуем объект в массив объектов.
+        // Object.entries возвращает массив пар [ключ, значение]
+        return Object.entries(mObj).map(([key, value]) => ({
+
+            // разворачиваем исходный объект, чтобы передать все его данные
+            ...value,
+
+            // сохраняем название ключа исходного объекта, 
+            // чтобы можно было потом преобразовать массив обратно в объект по данному ключу
+            m_KeyConversion: String(key)
+        }));
+    },
+
+    // 🔹 Преобразует массив в объект.
+    convert_mArrayToObject(
+        mArr,
+        input_KeyConversion // ЭТО НЕ ОБЯЗАТЕЛЬНЫЙ АРГУМЕНТ, применяется для тех массивов, которые были получены в результате предварительноо преобразования из объектов, - в этом случае у них есть свой ключ трансформации 
+    ) {
+        try {
+            if (!Array.isArray(mArr)) {
+                console.log(" ");
+                console.log("Ошибка из convert_mArrayToObject - входящий аргумент не является Массивом");
+                return null;
+            }
+            if (
+                input_KeyConversion // если этот аргумент передан в функцию 
+                &&
+                (typeof input_KeyConversion) !== 'string' // и при этом он не является строкой 
+            ) {
+                console.log(" ");
+                console.log("Ошибка из convert_mArrayToObject - Ключевое поле должно быть строкой");
+                return null;
+            }
+            // Преобразуем весь массив в массив пар [ключ, данные] Т.е. нам нужно извлечь ранее записанный ключь объекта в отдельную пару, и в то же время удалить его оз общих данных 
+            const entries = mArr.map((item) => {
+                const m_KeyConversion = input_KeyConversion
+                    ? item[input_KeyConversion] // если имя ключа передано во входящик аргументах - находим и извлекаем его в текущей записи 
+                    : item.m_KeyConversion; // 1️⃣ Получаем значение поля keyConversion из текущего объекта, Оно там будет в том случае, если данный массив предварительно был получен преобразованием из объекта 
+                if (!m_KeyConversion) {
+                    console.log(" ");
+                    console.log("ОШИБКА - Ключ m_KeyConversion НЕ ОБНАРУЖЕН !!! ");
+                    // return null; 
+                    // след код прервет функцию и передаст функционал в блок /catch на уровне всей функции. 
+                    throw new Error("Ключ " + (input_KeyConversion || "m_KeyConversion") + " НЕ ОБНАРУЖЕН !!!");
+                }
+
+                const rest = { ...item }; // делаем копию текущего елемента массива, который затем используем в качества значений содержимого 
+                delete rest.m_KeyConversion; // 2️⃣ Удаляем из него его из объекта ключ трансформации keyConversion (если он там есть), чтобы он не загрязнял данные 
+                // 3️⃣ В промежуточный массив пар возвращаем массив из двух элементов: [ ключ, оставшиеся данные ] 
+                return [m_KeyConversion, rest];
+            });
+
+            // Превращаем массив пар обратно в объект 
+            const mNewObj = Object.fromEntries(entries); return mNewObj;
         }
-    }
+        catch (error) {
+            console.log(" ");
+            console.log("Ошибка из convert_mArrayToObject: ");
+            console.log(error);
+            return null;
+        }
+    },
+
+
+    check_isVar_object(mVar) {
+        return (
+            typeof mVar === 'object'
+            && mVar !== null
+            && !Array.isArray(mVar)
+        );
+    },
+
+    check_isVar_array(mVar) {
+        return Array.isArray(mVar);
+    },
+
 
 }

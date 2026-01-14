@@ -19,11 +19,18 @@ const config_pr0002 = {
     id___BTC_USD_signal: '1849534701',  // проверить !!! 
     adminTelegramAccount_ID_pr0002: 1668193760,
 
+    intervalSaveData_localDisk: 600000,  // раз в 10 мин
+    intervalSaveData_mongoDB: 3600000,  // раз в час
+    
     // Доступ к МонгоДБ
     // Важно!- к основному адресу дописываем имя пользователя и пароль. Имя кластера для всех проектов остается cluster-pr0001, т.к. его невозможно изменить. В конце добавляем bd_pr0002 - это имя целевой базы данных. 
     // Также важно - для данного админа в монго ДБ устанавливаем доступ только к целевой БД, делаем это на странице: https://cloud.mongodb.com/v2/66afc140a4ad243040e95eff#/security/database
-    mMongoURL_pr0002: 'mongodb+srv://adminServer_pr0002:jgjgJGHHJJ744@cluster-pr0001.vsenbpi.mongodb.net/bd_pr0002'
+    mMongoURL_pr0002: 'mongodb+srv://adminServer_pr0002:jgjgJGHHJJ744@cluster-pr0001.vsenbpi.mongodb.net/bd_pr0002',
 
+
+    emodziListTelegram_currentProject: {
+        default_currentProjectEmodzi: '📊', // square_black      //  '💻',
+    },
 
 }
 //------------------

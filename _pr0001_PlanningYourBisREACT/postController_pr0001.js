@@ -1,578 +1,553 @@
 
-import postService_pr0001 from './postService_pr0001.js';
+import { postService_pr0001 } from './postService_pr0001.js';
 import { validationResult } from 'express-validator';
-import m_ApiErrors from './m_ApiErrors.js';
 
-class postController_pr0001 {
 
-    async m_get_full_data_from_server(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_get_full_data_from_server_PS(req);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_get_full_DB_and_Reestr: " + error);
-        }
-    }
-    //---------
-    async m_getAllDB(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_getAllDB_PS(req);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_getAllDB: " + error);
-        }
-    }
-    //---------
-    async m_getTopData_ByClient(req, res) {
-        try {
-            console.log(" ");
-            console.log("Запуск m_getTopData_ByClient= ");
-            console.log("req.headers=");
-            console.log(req.headers);
-            console.log(" ");
-            console.log("req.body=");
-            console.log(req.body);
 
-            const m_postToDB = await postService_pr0001.m_getTopData_ByClient_PS(req);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_getFullData_CurrentProject(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_getFullData_CurrentProject_PS(req);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_addNewProject(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_addNewProject_PS(req, res);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_newMessageChatProject(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_newMessageChatProject_PS(req, res);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_add_new_sub_Project(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_add_new_sub_Project_PS(req, res);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_newMessageChat_sub_Project(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_newMessageChat_sub_Project_PS(req, res);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    // Не используем, вместо этого используем порционную загрузку сообщений "get_lastMessages_currentChat"
-    async m_get_chatList_CurrentProject(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_get_chatList_CurrentProject_PS(req);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_get_chatList_CurrentProject: " + error);
-        }
-    }
-    //---------
-    async m_get_lastMessages_currentChat(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_get_lastMessages_currentChat_PS(req, res);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_get_lastMessages_currentChat: " + error);
-        }
-    }
-    //---------
-    async m_get_PreviousItems_chatList_CurrentProject(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_get_PreviousItems_chatList_CurrentProject_PS(req, res);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_get_PreviousItems_chatList_CurrentProject: " + error);
-        }
-    }
-    //---------
-    async m_dell_One_Project(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_dell_One_Project_PS(req, res);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_dell_One_sub_Project(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_dell_One_sub_Project_PS(req, res);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_updateTeamForProject(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_updateTeamForProject_PS(req, res);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_update_ofResponsibleList_subProject(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_update_ofResponsibleList_subProject_PS(req, res);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_update_ofResponsibleList_subProject: " + error);
-        }
-    }
-    //---------
-    async m_dellAllProjects(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_dellAllProjects_PS();
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_set_subProject_settings(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_set_subProject_settings_PS(req);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_set_project_settings(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_set_project_settings_PS(req);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_addUser_toContactList(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_addUser_toContactList_PS(req);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001: " + error);
-        }
-    }
-    //---------
-    async m_deleteUsers_fromContactList(req, res) {
-        try {
-            const m_postToDB = await postService_pr0001.m_deleteUsers_fromContactList_PS(req);
-            res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_deleteUsers_fromContactList: " + error);
-        }
-    }
-    //---------
-    async m_set_newContactList(req, res) {
-        try {
-            await postService_pr0001.m_set_newContactList_PS(req, res);
-            // const m_postToDB = await postService_pr0001.m_set_newContactList_PS(req, res);
-            // res.status(200).json(m_postToDB);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_set_newContactList_PS: " + error);
-        }
-    }
+export const postController_pr0001 = {
 
+
+    async get_full_data_from_server(req, res) {
+
+        try {
+            const postServise_answer = await postService_pr0001.get_full_data_from_server_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, get_full_data_from_server");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, get_full_data_from_server, from catch");
+        }
+
+    },
+    //---------
+    async download_clientsContractsData_cms_fromGitHub_toMainServer_PC(req, res) {
+
+        try {
+            const postServise_answer = await postService_pr0001.download_clientsContractsData_cms_fromGitHub_toMainServer_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, download_clientsContractsData_cms_fromGitHub_toMainServer_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, download_clientsContractsData_cms_fromGitHub_toMainServer_PC, from catch");
+        }
+
+    },
+    //---------
+    async getTopData_ByClient_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.getTopData_ByClient_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, getTopData_ByClient_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, getTopData_ByClient_PC, from catch");
+        }
+    },
+    //---------
+    async getFullData_CurrentProject_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.getFullData_CurrentProject_PS(req);
+
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, getFullData_CurrentProject_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, getFullData_CurrentProject_PC, from catch");
+        }
+    },
+    //---------
+    async add_newProject_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.add_newProject_PS(req, res);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, add_newProject_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, add_newProject_PC, from catch");
+        }
+    },
+    //---------
+    async add_new_subProject_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.add_newSubProject_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, add_new_subProject_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, add_new_subProject_PC, from catch");
+        }
+    },
+    //---------
+    async new_message_in_chat_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.new_message_in_chat_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, new_message_in_chat_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, new_message_in_chat_PC, from catch");
+        }
+    },
+    //---------
+    async get_lastMessages_currentChat_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.get_lastMessages_currentChat_PS(req);
+
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, get_lastMessages_currentChat_PC");
+            }
+
+        } catch (error) {
+            res.status(500).json("Server error, get_lastMessages_currentChat_PC, from catch");
+        }
+    },
+    //---------
+    async get_PreviousItems_chatList_CurrentProject_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.get_PreviousItems_chatList_CurrentProject_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, get_PreviousItems_chatList_CurrentProject_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, get_PreviousItems_chatList_CurrentProject_PC, from catch");
+        }
+    },
+    //---------
+    async delete_one_project_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.delete_one_project_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, delete_one_project_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, delete_one_project_PC, from catch");
+        }
+    },
+    //---------
+    async delete_one_subProject_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.delete_one_subProject_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, delete_one_subProject_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, delete_one_subProject_PC, from catch");
+        }
+    },
+    //---------
+    async updateTeamForProject_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.updateTeamForProject_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, updateTeamForProject_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, updateTeamForProject_PC, from catch");
+        }
+    },
+    //---------
+    async update_ofResponsibleList_subProject_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.update_ofResponsibleList_subProject_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, update_ofResponsibleList_subProject_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, update_ofResponsibleList_subProject_PC, from catch");
+        }
+    },
+    //---------
+    async set_subProject_settings_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.set_subProject_settings_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, set_subProject_settings_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, set_subProject_settings_PC, from catch");
+        }
+    },
+    //---------
+    async set_project_settings_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.set_project_settings_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, set_project_settings_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, set_project_settings_PC, from catch");
+        }
+    },
+    //---------
+    async addUser_toContactList_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.add_user_toContactList_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, addUser_toContactList_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, addUser_toContactList_PC, from catch");
+        }
+    },
+    //---------
+    async set_newContactList_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.set_newContactList_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, set_newContactList_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, set_newContactList_PC, from catch");
+        }
+    },
+    //---------
+    async deleteUsers_fromContactList_PC(req, res) {
+        try {
+            const postServise_answer = postService_pr0001.delete_users_fromContactList_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, deleteUsers_fromContactList_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, deleteUsers_fromContactList_PC, from catch");
+        }
+    },
     //========================
     // Обработчики для foolTimeSubscriber    
-    async m_subscribeFullTime(req, res) {
 
+    async subscribeFullTime_PC(req, res) {
+        // ОБРАТИТЬ ВНИМАНИЕ - тут Респонст передаем дальше для прямой обработки в постСервисе !!!
         try {
             //const longPoollingToServer = await postService_pr0001.m_subscribeFullTime_PS(req, res);
             //res.status(200).json(longPoollingToServer); // res вызываем внутри longPoollingToServer
-            await postService_pr0001.m_subscribeFullTime_PS(req, res);
+            postService_pr0001.subscribeFullTime_PS(req, res);
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_subscribeFullTime: " + error);
+            res.status(500).json("Ошибка из postController_pr0001 --- subscribeFullTime_PC: " + error);
         }
-    }
+    },
     //---------
-    async m_getUsersOnlineStatusFromServer_forCurrentProject(req, res) {
+    async getUsersOnlineStatusFromServer_forCurrentProject_PC(req, res) {
         try {
-            await postService_pr0001.m_getUsersOnlineStatusFromServer_forCurrentProject_PS(req, res);
+            const postServise_answer = postService_pr0001.get_usersOnlineStatusFromServer_forCurrentProject_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, getUsersOnlineStatusFromServer_forCurrentProject_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_getUsersOnlineStatusFromServer_forCurrentProject: " + error);
+            res.status(500).json("Server error, getUsersOnlineStatusFromServer_forCurrentProject_PC, from catch");
         }
-    }
+    },
 
-
-
-
-
-
-    //  Настройки пользователя ========================================
+    // Настройки пользователя ========================================
     //---------
-    async m_setUserSettings(req, res) {
+    async setUserSettings_PC(req, res) {
         try {
-            await postService_pr0001.m_setUserSettings_PS(req, res);
+            const postServise_answer = postService_pr0001.setUserSettings_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, setUserSettings_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_setUserSettings: " + error);
+            res.status(500).json("Server error, setUserSettings_PC, from catch");
         }
-    }
+    },
     //---------
-    async m_uploadAvatarUser(req, res) {
+    async uploadAvatarUser_PC(req, res) {
         try {
-            await postService_pr0001.m_uploadAvatarUser_PS(req, res);
+            const postServise_answer = await postService_pr0001.uploadAvatarUser_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, uploadAvatarUser_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_uploadAvatarUser: " + error);
+            res.status(500).json("Server error, uploadAvatarUser_PC, from catch");
         }
-    }
+    },
     //---------
-    async m_deleteAvatarFromServer(req, res) {
+    async delete_avatarFromServer_PC(req, res) {
         try {
-            await postService_pr0001.m_deleteAvatarFromServer_PS(req, res);
+            const postServise_answer = await postService_pr0001.delete_avatarFromServer_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, delete_avatarFromServer_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_deleteAvatarFromServer: " + error);
+            res.status(500).json("Server error, delete_avatarFromServer_PC, from catch");
         }
-    }
-    //---------
-    async m_orderTarifPlan(req, res) {
-        try {
-            await postService_pr0001.m_orderTarifPlan_PS(req, res);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_orderTarifPlan: " + error);
-        }
-    }
-
-
-
-
-
-
-
-
-
+    },
 
     // Корп Аккаунты ========================================
     //---------
-    async m_addNewCorpAccount(req, res) {
+    async add_newCorpAccount_PC(req, res) {
         try {
-            await postService_pr0001.m_addNewCorpAccount_PS(req, res);
+            const postServise_answer = postService_pr0001.add_newCorpAccount_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, add_newCorpAccount_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_getUsersOnlineStatusFromServer_forContactListCurrentAdmin: " + error);
+            res.status(500).json("Server error, add_newCorpAccount_PC, from catch");
         }
-    }
+    },
     //---------
-    async m_renameCorpAccount(req, res) {
+    async rename_corpAccount_PC(req, res) {
         try {
-            await postService_pr0001.m_renameCorpAccount_PS(req, res);
+            const postServise_answer = postService_pr0001.rename_corpAccount_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, rename_corpAccount_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_renameCorpAccount: " + error);
+            res.status(500).json("Server error, rename_corpAccount_PC, from catch");
         }
-    }
+    },
     //---------
-    async m_deleteCorpAccount(req, res) {
+    async delete_oneCorpAccount_PC(req, res) {
         try {
-            await postService_pr0001.m_deleteCorpAccount_PS(req, res);
+            const postServise_answer =  postService_pr0001.delete_one_corpAccaunt_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, delete_oneCorpAccount_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_deleteCorpAccount: " + error);
+            res.status(500).json("Server error, delete_oneCorpAccount_PC, from catch");
         }
-    }
+    },
     //---------
-    async m_ignorOwnerCorpAccount(req, res) {
+    async ignor_ownerCorpAccount_PC(req, res) {
         try {
-            await postService_pr0001.m_ignorOwnerCorpAccount_PS(req, res);
+            const postServise_answer = postService_pr0001.ignor_ownerCorpAccount_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, ignor_ownerCorpAccount_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_ignorOwnerCorpAccount: " + error);
+            res.status(500).json("Server error, ignor_ownerCorpAccount_PC, from catch");
         }
-    }
+    },
     //---------
-    async m_restoreOwnerCorpAccount(req, res) {
+    async restore_ownerCorpAccount_PC(req, res) {
         try {
-            await postService_pr0001.m_restoreOwnerCorpAccount_PS(req, res);
+            const postServise_answer =  postService_pr0001.restore_ownerCorpAccount_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, restore_ownerCorpAccount_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_restoreOwnerCorpAccount: " + error);
+            res.status(500).json("Server error, restore_ownerCorpAccount_PC, from catch");
         }
-    }
-
-
-
-
-
-    //---------
-    // Не используется
-    async m_getUsersOnlineStatusFromServer_forContactListCurrentAdmin(req, res) {
-        try {
-            await postService_pr0001.m_getUsersOnlineStatusFromServer_forContactListCurrentAdmin_PS(req, res);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_getUsersOnlineStatusFromServer_forContactListCurrentAdmin: " + error);
-        }
-    }
+    },
 
     //========================
     // Обработчики для уведомлений
-    async m_timeUpdate_wasReadChat(req, res) {
-
+    
+    async timeUpdate_wasReadChat_PC(req, res) {
         try {
-            //const longPoollingToServer = await postService_pr0001.m_timeUpdate_wasReadChat(req, res);
-            //res.status(200).json(longPoollingToServer); // res вызываем внутри longPoollingToServer
-            await postService_pr0001.m_timeUpdate_wasReadChat_PS(req, res);
+            const postServise_answer = postService_pr0001.timeUpdate_wasReadChat_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, timeUpdate_wasReadChat_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_timeUpdate_wasReadChat_PS: " + error);
+            res.status(500).json("Server error, timeUpdate_wasReadChat_PC, from catch");
         }
-    }
+    },
     //---------
-    async m_timeUpdate_wasReadProjectSettings(req, res) {
-
+    // видимо функция замененв на униерсальн функцию для проектов и субПроектов
+    async timeUpdate_wasReadProjectSettings_PC(req, res) {
         try {
-            //const longPoollingToServer = await postService_pr0001.m_timeUpdate_wasReadProjectSettings(req, res);
-            //res.status(200).json(longPoollingToServer); // res вызываем внутри longPoollingToServer
-            await postService_pr0001.m_timeUpdate_wasReadProjectSettings_PS(req, res);
+            const postServise_answer =  postService_pr0001.timeUpdate_wasReadProjectSettings_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, timeUpdate_wasReadProjectSettings_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_timeUpdate_wasReadProjectSettings_PS: " + error);
+            res.status(500).json("Server error, timeUpdate_wasReadProjectSettings_PC, from catch");
         }
-    }
+    },
     //---------
-    async m_timeUpdate_wasRead_subChat(req, res) {
+    // видимо функция замененв на униерсальн функцию для проектов и субПроектов
+    async timeUpdate_wasRead_subChat_PC(req, res) {
         try {
-            //const longPoollingToServer = await postService_pr0001.m_timeUpdate_wasRead_subChat(req, res);
-            //res.status(200).json(longPoollingToServer); // res вызываем внутри longPoollingToServer
-            await postService_pr0001.m_timeUpdate_wasRead_subChat_PS(req, res);
+            const postServise_answer = postService_pr0001.timeUpdate_wasRead_subChat_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, timeUpdate_wasRead_subChat_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_timeUpdate_wasReadChat_PS: " + error);
+            res.status(500).json("Server error, timeUpdate_wasRead_subChat_PC, from catch");
         }
-    }
+    },
     //---------
-    async m_timeUpdate_wasRead_subProject_settings(req, res) {
+    // видимо функция замененв на униерсальн функцию для проектов и субПроектов
+    async timeUpdate_wasRead_subProject_settings_PC(req, res) {
         try {
-            await postService_pr0001.m_timeUpdate_wasRead_subProject_settings_PS(req, res);
+            const postServise_answer =  postService_pr0001.timeUpdate_wasRead_subProject_settings_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, timeUpdate_wasRead_subProject_settings_PC");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_timeUpdate_wasRead_subProject_settings_PS: " + error);
+            res.status(500).json("Server error, timeUpdate_wasRead_subProject_settings_PC, from catch");
         }
-    }
-    //---------
-    async m_confirmOnlineStatus(req, res) {
-        try {
-            await postService_pr0001.m_confirmOnlineStatus_PS(req, res);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_confirmOnlineStatus: " + error);
-        }
-    }
-
-    //========================
-
-    // Загрузка/скачивание файлов:
-    // НЕ ИСПОЛЬЗУЕМ, вместо этого дагружаем по одному файлу
-    async m_uploadFilesToServer(req, res) {
-        try {
-            await postService_pr0001.m_uploadFilesToServer_PS(req, res);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- uploadFilesToServer: " + error);
-        }
-    }
-    //---------
-    async m_uploadOneFileToServer(req, res) {
-        try {
-            await postService_pr0001.m_uploadOneFileToServer_PS(req, res);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_uploadOneFileToServer: " + error);
-        }
-    }
-    //---------
-    async m_downloadOneFileFromServer(req, res) {
-        try {
-            await postService_pr0001.m_downloadOneFileFromServer_PS(req, res);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_downloadOneFileFromServer_PS: " + error);
-        }
-    }
-    //---------
-    async m_deleteFilesFromServer(req, res) {
-        try {
-            await postService_pr0001.m_deleteFilesFromServer_PS(req, res);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- deleteFilesFromServer: " + error);
-        }
-    }
-    //---------
-    async m_getFilesListFromServer(req, res) {
-        try {
-            await postService_pr0001.m_getFilesListFromServer_PS(req, res);
-        } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_getFilesListFromServer_PS: " + error);
-        }
-    }
-
+    },
 
     //========================
     // Авторизация:
-    async m_registration_User(req, res, next) {
-        try {
-            console.log("Запуск PostController - m_registration_User: req= ");
-            // console.log(req); 
-
-            /* 
-            // просматриваем результат валидации, см. видео 54:20
-            const mErrors = validationResult(req);
-            // проверяем: если в массиве ошибок mErrors присутствуют какие-то данные (т.е. перечень ошибок), то соотв. реагируем
-            if (!mErrors.isEmpty()) {
-                console.log("mErrors.isAmpty= ");
-                console.log(mErrors.isAmpty);
-                return next(m_ApiErrors.m_BadRequest("Ошибка валидации при регистрации", mErrors));
-            }
-             */
-
-            // если пред проверка пройдена - проходим дальше
-            await postService_pr0001.m_registration_User_PS(req, res);
-
-        } catch (error) {
-            // res.status(500).json("Ошибка из postController_pr0001 --- m_registration_User: " + error);
-            next(error);
-        }
-    }
-    //---------
-    async m_confirmRegistrationUser(req, res, next) {
-        try {
-            console.log("Из PostController - m_confirmRegistrationUser");
-            // console.log(req);
-            // const m_postToDB = await postService_pr0001.m_confirmRegistrationUser_PS(req, res);
-            // res.status(200).json(m_postToDB);
-
-            await postService_pr0001.m_confirmRegistrationUser_PS(req, res);
-
-        } catch (error) {
-            // res.status(500).json("Ошибка из postController_pr0001 --- m_confirmRegistrationUser: " + error);
-            next(error);
-        }
-    }
-
-    //---------
-
-    async m_changePassword(req, res, next) {
-        try {
-            // console.log("Запуск PostController - m_registration_User: req= ");
-            // если пред проверка пройдена - проходим дальше
-            await postService_pr0001.m_changePassword_PS(req, res);
-
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    //---------
-
-    async m_confirmChangePassword(req, res, next) {
-        try {
-            // console.log("Запуск PostController - m_confirm_changeORrecoverForgottenPassword");
-            // если пред проверка пройдена - проходим дальше
-            await postService_pr0001.m_confirmChangePassword_PS(req, res);
-        } catch (error) {
-            next(error);
-        }
-    }
-
-    //---------
-    async m_logIn(req, res, next) {
-        try {
-            await postService_pr0001.m_logIn_PS(req, res);
-        } catch (error) {
-            // res.status(500).json("Ошибка из postController_pr0001 --- m_logIn: " + error);
-            next(error);
-        }
-    }
-    //---------
-    // эту функцию не используем, вместо нее "m_logOutOneGadget_PS"
-    async m_logOut(req, res, next) {
-        // эту функцию не используем, вместо нее "m_logOutOneGadget_PS"
-        try {
-            //  console.log("Из PostController - m_logOut: req= ");
-            // console.log(req);
-            await postService_pr0001.m_logOut_PS(req, res);
-
-        } catch (error) {
-            // res.status(500).json("Ошибка из postController_pr0001 --- m_logOut: " + error);
-            next(error);
-        }
-    }
-
-    //---------
-    async m_logOutOneGadget(req, res, next) {
-        try {
-            await postService_pr0001.m_logOutOneGadget_PS(req, res);
-        }
-        catch (error) {
-            // res.status(500).json("Ошибка из m_logOutOneGadget --- m_logIn: " + error);
-            next(error);
-        }
-    }
-
-    //---------
-
-    async m_logOutAllGadgets(req, res, next) {
-        try {
-            //  console.log("Из PostController - m_logOut: req= ");
-            // console.log(req);
-            await postService_pr0001.m_logOutAllGadgets_PS(req, res);
-
-        }
-        catch (error) {
-            // res.status(500).json("Ошибка из m_logOutAllGadgets --- m_logIn: " + error);
-            next(error);
-        }
-    }
-
-    //---------
-    async m_refreshToken(req, res, next) {
-        try {
-            // console.log("Из PostController - m_uploadFilesToServer: req= ");
-            // console.log(req);
-            await postService_pr0001.m_refreshToken_PS(req, res);
-
-        } catch (error) {
-            // res.status(500).json("Ошибка из postController_pr0001 --- m_refreshToken: " + error);
-            next(error);
-        }
-    }
-    //---------  test_01
-    async m_test_01(req, res, next) {
-        try {
-            await postService_pr0001.m_test_01_PS(req, res);
-        } catch (error) {
-            next(error);
-        }
-    }
 
     //---------
     async m_GoogleAuth_01(req, res) {
         try {
-            await postService_pr0001.m_GoogleAuth_01_PS(req, res);
+            const postServise_answer = await postService_pr0001.GoogleAuth_01_PS(req);
+            if (postServise_answer.mResStatus === 1) {
 
+                // console.log(" ");
+                // console.log("Отправляем ответ из m_GoogleAuth_01, dataFromServer = ");
+                // console.log(postServise_answer.dataFromServer);
+
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, m_GoogleAuth_01");
+            }
         } catch (error) {
-            res.status(500).json("Ошибка из postController_pr0001 --- m_GoogleAuth_01: " + error);
-        }
-    }
-}
 
-//===============================
-export default new postController_pr0001();
+
+
+            res.status(500).json("Server error, m_GoogleAuth_01, from catch");
+        }
+    },
+    //---------
+    async logOutOneGadget_PC(req, res) {
+        try {
+            const postServise_answer =  postService_pr0001.logOutOneGadget_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, logOutOneGadget_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, logOutOneGadget_PC, from catch");
+        }
+    },
+    //---------
+    async logOutAllGadgets_PC(req, res) {
+        try {
+            const postServise_answer =  postService_pr0001.logOutAllGadgets_PS(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, logOutAllGadgets_PC");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, logOutAllGadgets_PC, from catch");
+        }
+    },
+
+    //========================
+    // Запросы от файлового сервиса:
+
+    async access_toProjectFiles_PC___pr0001(req, res) {
+        try {
+
+            // console.log(" ");
+            // console.log("ЗАПУСК access_toProjectFiles_PC___pr0001, req.body = ");
+            // console.log(req.body);
+
+            const postServise_answer = await postService_pr0001.access_toProjectFiles_PS___pr0001(req);
+            if (postServise_answer.mResStatus === 1) {
+                res.status(200).json(postServise_answer.dataFromServer);
+            }
+            else {
+                res.status(500).json("Server error, access_toProjectFiles_PC___pr0001");
+            }
+        } catch (error) {
+            res.status(500).json("Server error, access_toProjectFiles_PC___pr0001, from catch");
+        }
+    },
+    
+}
 
 
 
