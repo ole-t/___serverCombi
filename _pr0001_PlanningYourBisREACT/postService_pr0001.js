@@ -30,7 +30,7 @@ import { create_user_inReestr, create_user_AccessProjects, create_subProjectEven
 import { create_Chat, create_messageInChat } from "./chatStructure.js";
 import { global_Functions_and_Servises_forAll_Projects } from '../global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
 
-import { connectionTo_infoTelegramBot___SERVER_COMBI} from '../infoBotTelegram___server_combi.js';
+import { connectionTo_infoTelegramBot___SERVER_COMBI } from '../infoBotTelegram___server_combi.js';
 
 import { first_LoadData_pr0001 } from './saveAndLoadDataServise_pr0001.js'
 
@@ -1406,9 +1406,9 @@ export const postService_pr0001 = {
 
             // удаляем чат субпроекта
             try {
-                let parent_owner_ID = await functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
-
-                await chats_functions_localMongo.delete_subProjectChat_localMongo(
+                let parent_owner_ID = functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
+                // Хотя функция delete_subProjectChat_localMongo() - асинхронная, мы не используем await, чтобы не затягивать ответ клиенту
+                chats_functions_localMongo.delete_subProjectChat_localMongo(
                     parent_owner_ID,
                     parent_corpAccount_ID,
                     parent_project_ID,
@@ -1516,9 +1516,9 @@ export const postService_pr0001 = {
 
             // удаляем чат проекта и субпроектов
             try {
-                let parent_owner_ID = await functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
-
-                await chats_functions_localMongo.delete_projectChat_localMongo (
+                let parent_owner_ID = functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
+                // Хотя функция delete_projectChat_localMongo() - асинхронная, мы не используем await, чтобы не затягивать ответ клиенту
+                chats_functions_localMongo.delete_projectChat_localMongo(
                     parent_owner_ID,
                     parent_corpAccount_ID,
                     project_ID,
@@ -1663,9 +1663,9 @@ export const postService_pr0001 = {
 
             // удаляем чаты корпАккаунта, со вложенными часами проектов и субпроекта
             try {
-                let parent_owner_ID = await functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
-
-                await chats_functions_localMongo.delete_corpAccountChat_localMongo (
+                let parent_owner_ID = functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
+                // Хотя функция delete_corpAccountChat_localMongo() - асинхронная, мы не используем await, чтобы не затягивать ответ клиенту
+                chats_functions_localMongo.delete_corpAccountChat_localMongo(
                     parent_owner_ID,
                     corpAccount_ID,
                 );
