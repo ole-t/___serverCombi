@@ -104,7 +104,7 @@ const PORT = 5076;
 async function startServer() {
     try {
         // затем запускаем сервер
-        server.listen(PORT, "127.0.0.1", async () => {
+        server.listen(PORT, async () => {
             console.log("");
             console.log("server_pr0003 is start, порт: " + PORT);
 

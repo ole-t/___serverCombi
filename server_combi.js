@@ -105,7 +105,7 @@ async function startServer() {
 
     try {
         // затем запускаем сервер
-        mServer.listen(PORT, "127.0.0.1", async () => {
+        mServer.listen(PORT, async () => {
             console.log("");
             console.log("server_combi is start, порт: " + PORT);
 
