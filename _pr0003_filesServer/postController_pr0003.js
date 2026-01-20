@@ -7,8 +7,11 @@ import fs from 'fs';
 export const postController_pr0003 = {
 
     async uploadOneFileToServer_PC(req, res) {
-        // console.log("\nЗапуск uploadOneFileToServer_PC, req.headers =");
-        // console.log(req.headers);
+        console.log("\nЗапуск uploadOneFileToServer_PC, req.headers =");
+        console.log(req.headers);
+
+        await vars_and_functions___pr0003.sendTelegramInfo_from_pr0003("апуск uploadOneFileToServer_PC, req.headers =", "yellow");
+        vars_and_functions___pr0003.sendTelegramInfo_from_pr0003(req.headers, "yellow");
 
         // Берём email из заголовка
         const user_Email = req.headers['user_email_in_headers'];
