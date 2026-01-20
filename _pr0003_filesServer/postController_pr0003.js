@@ -1,5 +1,5 @@
 
-
+import jwt_decode from 'jwt-decode';
 import { validationResult } from 'express-validator';
 import { postService_pr0003, vars_and_functions___pr0003 } from './postService_pr0003.js';
 import fs from 'fs';
@@ -10,11 +10,11 @@ export const postController_pr0003 = {
         console.log("\nЗапуск uploadOneFileToServer_PC, req.headers =");
         console.log(req.headers);
 
-        await vars_and_functions___pr0003.sendTelegramInfo_from_pr0003("апуск uploadOneFileToServer_PC, req.headers =", "yellow");
-        vars_and_functions___pr0003.sendTelegramInfo_from_pr0003(JSON.stringify(req.headers, null, 2), "yellow");
+        // Берём user_Email из accessToken в заголовке
+        const user_Email = jwt_decode(req.headers.accesstoken).user_Email;
 
-        // Берём email из заголовка
-        const user_Email = req.headers['user_email_in_headers'];
+        vars_and_functions___pr0003.sendTelegramInfo_from_pr0003("user_Email из accessToken в заголовке= " + user_Email, "yellow");
+
         if (!user_Email) {
             console.log(" ");
             console.log("Ошибка в uploadOneFileToServer_PC -Нет user_Email в заголовке");
