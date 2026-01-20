@@ -90,8 +90,9 @@ mServer.use(cors({
         "https://ole-t.github.io",
     ],
     methods: ['GET', 'POST'],
-    // след для разрешения отправки Куки
-    credentials: true,
+    // ВАЖНО - указываем список разрешенных нестандартных заголовков, иначе они могут блокироваться при сложных постах, например с FormData
+    allowedHeaders: ['Content-Type', 'accesstoken', 'user_email_in_headers'],
+    credentials: true, // след для разрешения отправки Куки - не используем
 }
 ));
 
