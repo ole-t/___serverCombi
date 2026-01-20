@@ -4,41 +4,52 @@ import { validationResult } from 'express-validator';
 import { postService_pr0003, vars_and_functions___pr0003 } from './postService_pr0003.js';
 import fs from 'fs';
 
-export const  postController_pr0003 = {
+export const postController_pr0003 = {
 
     async uploadOneFileToServer_PC(req, res) {
-        // console.log(" ");
-        // console.log("Звпуск uploadOneFileToServer_PC, req.url= " + req.url);
+        // console.log("\nЗапуск uploadOneFileToServer_PC, req.headers =");
+        // console.log(req.headers);
+
+        // Берём email из заголовка
+        const user_Email = req.headers['user_email_in_headers'];
+        if (!user_Email) {
+            console.log(" ");
+            console.log("Ошибка в uploadOneFileToServer_PC -Нет user_Email в заголовке");
+            return res.status(400).json("Нет user_Email в заголовке");
+        }
+
+        // Слушаем закрытие соединения клиента
+        req.on('close', () => {
+            console.log(`Клиент закрыл соединение: ${user_Email}`);
+            // Снимаем блокировку
+            vars_and_functions___pr0003.tempBlockedReestr[user_Email] = null;
+            // Можно добавить удаление временных файлов, если нужно
+        });
+
         try {
-            // проверяем, нет незавершенных загрузок/скачиваний для данного пользователя
-            if (vars_and_functions___pr0003.tempBlockedReestr[req.body.user_Email]) return res.status(500).json("No access - Anther files prosess");
-            else vars_and_functions___pr0003.tempBlockedReestr[req.body.user_Email] = "uploading_OneFileToServer"
-
-            let resultPostServise = await postService_pr0003.uploadOneFileToServer_PS(req);
-            // console.log(" ");
-            // console.log("resultPostServise= ", resultPostServise);
-            // ответ на клиента
-            switch (resultPostServise.mResStatus) {
-                case 1: {
-                    res.status(200).json(resultPostServise);
-                    break;
-                }
-                default: {
-                    res.status(500).json(resultPostServise.comment);
-                    break;
-                }
+            // Проверяем, нет ли незавершённой загрузки
+            if (vars_and_functions___pr0003.tempBlockedReestr[user_Email]) {
+                return res.status(500).json("No access - Another files process");
             }
-        } catch (error) {
-            // console.log(" ");
-            // console.log("Ошибка из postController_pr0003 --- uploadOneFileToServer_PC: " + error);
-            // console.log(" ");
-            res.status(500).json("Ошибка из postController_pr0003 --- uploadOneFileToServer_PC: ");
-        }
-        finally {
-            // Снимаем отметку о наличии обработки запроса для данного пользователя
-            vars_and_functions___pr0003.tempBlockedReestr[req.body.user_Email] = null;
-        }
+            vars_and_functions___pr0003.tempBlockedReestr[user_Email] = "uploading_OneFileToServer";
 
+            // Запуск пост-сервиса (Busboy и загрузка файла)
+            const resultPostServise = await postService_pr0003.uploadOneFileToServer_PS(req, user_Email);
+
+            // Ответ клиенту
+            if (resultPostServise.mResStatus === 1) {
+                res.status(200).json(resultPostServise);
+            } else {
+                res.status(500).json(resultPostServise.comment);
+            }
+
+        } catch (error) {
+            console.error("Ошибка из postController_pr0003 --- uploadOneFileToServer_PC:", error);
+            res.status(500).json("Ошибка из postController_pr0003 --- uploadOneFileToServer_PC");
+        } finally {
+            // Снимаем блокировку пользователя
+            vars_and_functions___pr0003.tempBlockedReestr[user_Email] = null;
+        }
     },
 
     //---------
@@ -62,9 +73,9 @@ export const  postController_pr0003 = {
                 }
             }
         } catch (error) {
-             console.log(" ");
-             console.log("Ошибка из postController_pr0003 --- getFilesListForCurrentProjectFromServer_PC: ");
-             console.log(error);
+            console.log(" ");
+            console.log("Ошибка из postController_pr0003 --- getFilesListForCurrentProjectFromServer_PC: ");
+            console.log(error);
             // console.log(" ");
             res.status(500).json("Ошибка из postController_pr0003 --- getFilesListForCurrentProjectFromServer_PC: ");
         }
@@ -125,6 +136,7 @@ export const  postController_pr0003 = {
     async downloadOneFileFromServer_PC(req, res) {
         const userEmail = req.body.user_Email;
 
+        // блокировка пользователя на время скачивания
         if (vars_and_functions___pr0003.tempBlockedReestr[userEmail]) {
             return res.status(500).json("No access - Another process running");
         }
@@ -149,12 +161,14 @@ export const  postController_pr0003 = {
             res.setHeader("myX-Message", "File was successfully sent");
             res.setHeader("Access-Control-Expose-Headers", "Content-Disposition, myX-Message");
 
-            // Отправляем файл и ждём завершения
+            // ─────────────────────────────
+            // Отправка файла через поток (для больших файлов)
+            // ─────────────────────────────
             await new Promise((resolve, reject) => {
-                res.download(result.filePath, result.fileName, (err) => {
-                    if (err) return reject(err);
-                    resolve();
-                });
+                const readStream = fs.createReadStream(result.filePath);
+                readStream.on("error", reject);
+                readStream.on("end", resolve);
+                readStream.pipe(res);
             });
 
         } catch (error) {
@@ -163,6 +177,7 @@ export const  postController_pr0003 = {
                 res.status(500).send("Ошибка при скачивании файла");
             }
         } finally {
+            // снимаем блокировку пользователя
             vars_and_functions___pr0003.tempBlockedReestr[userEmail] = null;
         }
     },

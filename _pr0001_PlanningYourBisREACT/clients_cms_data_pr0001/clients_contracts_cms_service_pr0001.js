@@ -3,7 +3,6 @@ import express from "express";
 import fetch from "node-fetch";
 
 import config_pr0001 from '../config_pr0001.js';
-import config_pr0003 from '../../_pr0003_filesServer/config_pr0003.js';
 import { functions___pr0001 } from '../postService_pr0001.js';
 // import {global_Functions_and_Servises_forAll_Projects} from '../global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
 
@@ -161,19 +160,6 @@ export async function download_githab_cms_file() {
         if (jsonData.defaultMaxCount_freeSubProjects_inEachProject) config_pr0001.default_limits_forOneUser.defaultMaxCount_freeSubProjects_inEachProject = jsonData.defaultMaxCount_freeSubProjects_inEachProject;
         if (jsonData.defaultMaxCount_freeMessages_inEachChat) config_pr0001.default_limits_forOneUser.defaultMaxCount_freeMessages_inEachChat = jsonData.defaultMaxCount_freeMessages_inEachChat;
 
-        // переносим полученные данные в рабочее окружение pr0003
-        if (jsonData.maxTotalSpaceInServerForFiles) config_pr0003.maxTotalSpaceInServerForFiles = jsonData.maxTotalSpaceInServerForFiles;
-
-        // console.log(" ");
-        // console.error("config_pr0003.maxSizeSingleFile перед перезаписью = " + config_pr0003.maxSizeSingleFile);
-
-        if (jsonData.maxSizeSingleFile) config_pr0003.maxSizeSingleFile = jsonData.maxSizeSingleFile;
-
-        // console.log(" ");
-        // console.error("config_pr0003.maxSizeSingleFile после перезаписи = " + config_pr0003.maxSizeSingleFile);
-
-        config_pr0003.default_limits_forOneUser.defaultFreeSpaceForFiles_forOneUser = jsonData.defaultFreeSpaceForFiles_forOneUser;
-
         mResponse.success_download_clientsContractsData_cms = true;
         mResponse.comment = "Данные успешно прочитаны с ГитХаб";
 
@@ -187,11 +173,6 @@ export async function download_githab_cms_file() {
                 console.log(error);
             }
         }, 1000);
-
-
-        // console.log(" ");
-        // console.error("config_pr0003= ");
-        // console.error(config_pr0003);
 
         return mResponse;
 

@@ -2,10 +2,16 @@
 import { requestToMainSever_service } from './requestToMainSever_service.js';
 import { vars_and_functions___pr0003 } from './postService_pr0003.js';
 import config_pr0003 from './config_pr0003.js';
+import { global_Functions_and_Servises_forAll_Projects } from '../global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
 
 export const accessToFiles_forUsers = {
 
-    async access_toUploadFilesToServer_forUser(mArgObj, req) {
+    async access_toUploadFilesToServer_forUser(mArgObj) {
+
+        console.log(" ");
+        console.log("Запуск access_toUploadFilesToServer_forUser, mArgObj= ");
+        console.log(mArgObj);
+
 
         let return_data_currentFunction = {
             // эти данные заменим ответом главного сервера
@@ -32,7 +38,7 @@ export const accessToFiles_forUsers = {
             // не превышен ли размер для одного файла
             if (config_pr0003.maxSizeSingleFile
                 &&
-                (config_pr0003.maxSizeSingleFile < req.files.m_oneFile.size)) {
+                (config_pr0003.maxSizeSingleFile < mArgObj.file_Size)) {
                 // console.log(" ");
                 // console.log("Превышен максимальный размер файла");
                 console.log("ОТКАЗ В ДОСТУПЕ --- single file size - over limit");
@@ -44,7 +50,7 @@ export const accessToFiles_forUsers = {
 
             // достаточно ли выделенного места в проекте для добавления файла
             if (answerFrom___get_userAccessData_toProjectFiles?.projectData.project_settings?.project_attachedFiles_settings?.maxFilesSpaseForCurrentProject <
-                (req.files.m_oneFile.size + vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.owner_Email]?.corpAccounts[mArgObj.corpAccount_ID]?.projects[mArgObj.project_ID]?.used_filesSize_forThisProject)
+                (mArgObj.file_Size + vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.owner_Email]?.corpAccounts[mArgObj.corpAccount_ID]?.projects[mArgObj.project_ID]?.used_filesSize_forThisProject)
             ) {
                 return_data_currentFunction.userAccessToCurrentFilesManipulations = false;
                 return_data_currentFunction.comment = "projekt files space - over limit";
@@ -58,14 +64,14 @@ export const accessToFiles_forUsers = {
                 availableFilesSpase = answerFrom___get_userAccessData_toProjectFiles.ownerData.owner_tarif_plan.max_diskSpace_forUploadFiles;
             }
             // исключаем превышение оплаченного места в на диске Владельца
-            if (availableFilesSpase < (answerFrom___get_userAccessData_toProjectFiles.ownerData.owner_tarif_plan.max_diskSpace_forUploadFiles + req.files.m_oneFile.size)) {
+            if (availableFilesSpase < (answerFrom___get_userAccessData_toProjectFiles.ownerData.owner_tarif_plan.max_diskSpace_forUploadFiles + mArgObj.file_Size)) {
                 return_data_currentFunction.userAccessToCurrentFilesManipulations = false;
                 return_data_currentFunction.comment = "Owner files space - over limit";
                 return return_data_currentFunction;
             }
 
             // не превышен ли объем в глобальном хранилище
-            if ((vars_and_functions___pr0003.usersFiles_Reestr._usedTotalSpaceForAllClientsFiles + req.files.m_oneFile.size) > config_pr0003.maxTotalSpaceInServerForFiles) {
+            if ((vars_and_functions___pr0003.usersFiles_Reestr._usedTotalSpaceForAllClientsFiles + mArgObj.file_Size) > config_pr0003.maxTotalSpaceInServerForFiles) {
                 return_data_currentFunction.userAccessToCurrentFilesManipulations = false;
                 return_data_currentFunction.comment = "Over total space for files";
 
@@ -92,7 +98,7 @@ export const accessToFiles_forUsers = {
 
         } catch (error) {
             console.log(" ");
-            console.log("Ошибка в access_toUploadFilesToServer_forUser");
+            console.log("Ошибка в catch - access_toUploadFilesToServer_forUser");
             console.log(error);
 
             return_data_currentFunction.userAccessToCurrentFilesManipulations = false;
@@ -232,11 +238,11 @@ export const accessToFiles_forUsers = {
     // Эта функция проверяет наличие допуска данного юзера к данному проекту и его файлам, запрашивает данные на главном сервере, и хеширует данные
     async get_userAccessData_toProjectFiles(mArgObj) {
 
-        // console.log(" ");
-        // console.log("--- ЗАПУСК get_userAccessData_toProjectFiles, mArgObj =  ");
-        // console.log(mArgObj);
+        console.log(" ");
+        console.log("--- ЗАПУСК get_userAccessData_toProjectFiles, mArgObj =  ");
+        console.log(mArgObj);
 
-        let userAccessData_toProjectFiles = null;
+        let userAccessData_toProjectFiles = {};
 
         // предварительно проверяем наличие минимальных входных данных
         let emaile_token_project_control = this.emaile_token_project_control(
@@ -250,7 +256,7 @@ export const accessToFiles_forUsers = {
 
             userAccessData_toProjectFiles.userAccessToCurrentFilesManipulations = false;
             userAccessData_toProjectFiles.comment = "No Access emaile_token_project_control";
-            return null;
+            return userAccessData_toProjectFiles;
         }
 
 
@@ -282,10 +288,34 @@ export const accessToFiles_forUsers = {
                             mArgObj,
                         );
 
+                // console.log(" ");
+                // console.log("userAccessData_toProjectFiles = ");
+                // console.log(userAccessData_toProjectFiles);
+
                 // тут свежие данные сохраняем в Хеш
                 vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.user_Email].usersCash ??= {};
-                vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.user_Email].usersCash = userAccessData_toProjectFiles;
-                vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.user_Email].usersCash.timeUpdateData = Date.now();
+
+                if (global_Functions_and_Servises_forAll_Projects.check_isVar_object(userAccessData_toProjectFiles)) {
+                    vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.user_Email].usersCash = { ...userAccessData_toProjectFiles };
+
+                    // console.log(" ");
+                    // console.log("usersCash = ");
+                    // console.log(vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.user_Email].usersCash);
+
+                    vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.user_Email].usersCash.timeUpdateData = Date.now();
+
+                    // console.log(" ");
+                    // console.log("usersCash ПОСЛЕ ОБНОВЛЕНИЯ ДАТЫ = ");
+                    // console.log(vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.user_Email].usersCash);
+                }
+                else {
+                    console.log(" ");
+                    console.log("НЕТ ДОСТУПА юзера к файлам");
+                    return null;
+                }
+
+
+
             }
 
             //  проверка принадлежности юзера к проекту

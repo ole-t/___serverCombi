@@ -1,8 +1,7 @@
 
 const config_serverCombi = {
     projectNameID: "serverCombi",
-    serverAdress: 5075,
-    telegramAccessToken___myInfoTelegramBot: '7280924078:AAEPXyvl8coKV_pS8KeuvnhKYfRh4UCxYBc',
+    telegramAccessToken___combi_server___infoBot: '7280924078:AAEPXyvl8coKV_pS8KeuvnhKYfRh4UCxYBc',
     adminTelegramAccount_ID_for_information: 1668193760, // сюда отправляем уведомления Телеграм
 
     // этот ключ хранится на моем Аккаунте Гугл в настройках приложения
@@ -46,12 +45,11 @@ const config_serverCombi = {
 
 // след переменную используем для блокирования некоторых функций во время отладки, в частнойсти: блокировка подключение к Телеграмм, отмена сохранение данных в Монго ДБ. При продакшине нужно вернуть в состояние false
 const localDebugProcess = false;  //  false;
-
+ 
 // В режиме отладки вносим изменения в конфиг
 if (localDebugProcess == true) {
     config_serverCombi.localDebugProcess = true;
-    config_serverCombi.serverAdress = "http://localhost:5075/";
-    config_serverCombi.telegramAccessToken___myInfoTelegramBot = '7117525016:AAHHX_RLtLuLtHsUBzBdqJjpvG9fbNkmD4g'; // это отдельный бот Телеграмм для режима отладки приложений
+    config_serverCombi.telegramAccessToken___combi_server___infoBot = '7117525016:AAHHX_RLtLuLtHsUBzBdqJjpvG9fbNkmD4g'; // это отдельный бот Телеграмм для режима отладки приложений
 }
 
 

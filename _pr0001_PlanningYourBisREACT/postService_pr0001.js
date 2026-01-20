@@ -29,18 +29,22 @@ import config_pr0001 from './config_pr0001.js';
 import { create_user_inReestr, create_user_AccessProjects, create_subProjectEvents_inUserReestr } from "./usersReestrModels.js";
 import { create_Chat, create_messageInChat } from "./chatStructure.js";
 import { global_Functions_and_Servises_forAll_Projects } from '../global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
+
+import { connectionTo_infoTelegramBot___SERVER_COMBI} from '../infoBotTelegram___server_combi.js';
+
 import { first_LoadData_pr0001 } from './saveAndLoadDataServise_pr0001.js'
 
 import { download_githab_cms_file } from './clients_cms_data_pr0001/clients_contracts_cms_service_pr0001.js';
 
 import config_serverCombi from '../config_serverCombi.js';
-import { connectionTo_infoTelegramBot } from '../server.js';
-import { vars_and_functions___pr0003 } from '../_pr0003_filesServer/postService_pr0003.js';
+
 import { addProject_toDeletingFiles, addCorpAcc_toDeletingFiles } from './deleteClientsDeadsFiles_service_pr0001.js';
 import { error } from 'console';
 import { Error } from 'mongoose';
 
+import { connect_to_local_Mongo_pr0001 } from './local_MongoDB_pr0001_service.js';
 
+import { chats_functions_localMongo } from './local_MongoDB_pr0001_service.js';
 
 //----------------------------------
 //----------------------------------
@@ -219,8 +223,6 @@ export const postService_pr0001 = {
                 users_Reestr: serverVarriorsDataFromBD_pr0001.users_Reestr,
                 chat_DB: serverVarriorsDataFromBD_pr0001.chat_DB,
 
-                usersFiles_Reestr: vars_and_functions___pr0003.usersFiles_Reestr,
-
                 projects_DB: serverVarriorsDataFromBD_pr0001.projects_DB,
                 users_Reestr: serverVarriorsDataFromBD_pr0001.users_Reestr,
                 chat_DB: serverVarriorsDataFromBD_pr0001.chat_DB,
@@ -253,7 +255,7 @@ export const postService_pr0001 = {
         // Отправляем информацию на телеграмм
         try {
             await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.messegeToCurrentTelegramBot(
-                connectionTo_infoTelegramBot,
+                connectionTo_infoTelegramBot___SERVER_COMBI,
                 config_serverCombi.adminTelegramAccount_ID_for_information,
                 config_pr0001.projectNameID, // Название проекта
                 "Запускаем download_clientsContractsData_cms_fromGitHub_toMainServer_PS", // текст сообщения
@@ -1156,7 +1158,7 @@ export const postService_pr0001 = {
         }
     },
 
-    new_message_in_chat_PS(req) {
+    async new_message_in_chat_PS(req) {
         let postServise_answer = {
             mResStatus: 0,    // варианты кодов: 1 - успешно сохранено, 10, 11, 12 ...
             comment: " ",
@@ -1175,6 +1177,10 @@ export const postService_pr0001 = {
             let subProject_ID = req.body.postDataToServer.subProject_ID;
             let autor_Email = req.body.postDataToServer.autor;
             let textMessage = req.body.postDataToServer.textMessage;
+
+            let pointer_parentOwner_inUsersReestr = functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email);
+
+            let parent_owner_ID = pointer_parentOwner_inUsersReestr.user_ID;
 
             // выполнить проверку, что отправитель является участником родительского проекта
             let exist_user_in_team_list = functions___pr0001.is_user_member_ofCurrentProject(
@@ -1216,19 +1222,19 @@ export const postService_pr0001 = {
                 }
             }
 
-            let pointer_current_chat = functions___pr0001.get_pointer_currentChat_OR_create_AND_getPointer_currentChat(
-                parent_owner_Email,
-                parent_corpAccount_ID,
 
-                parent_project_ID,
-                subProject_ID    // в случае чата для Проекта - тут будет undefined
-            );
-
-            // проверяем переполнение лимита количества субПроектов и при необх отправляем себе уведомление   
+            // проверяем переполнение лимита количества сообщений и при необх отправляем себе уведомление   
             {
-                let pointer_parentOwner_inUsersReestr = functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email);
+                let lastPrevious_message_inChat = chats_functions_localMongo.get_last_messages_fromChat_localMongo(
+                    parent_owner_Email,
+                    parent_owner_ID,
+                    parent_corpAccount_ID,
+                    parent_project_ID,
+                    subProject_ID,   // если null/undefined → основной чат проекта
+                    1      // нужно одно последнее сообщение в БД
+                );
 
-                let current_count_messages_inChat = pointer_current_chat.messages.length;
+                let current_count_messages_inChat = lastPrevious_message_inChat.knownIndexInReestr;
 
                 const limit_count_messages_inChat = pointer_parentOwner_inUsersReestr?.tarif_plan?.maxCount_freeMessages_inEachChat
                     ? pointer_parentOwner_inUsersReestr.tarif_plan.maxCount_freeMessages_inEachChat
@@ -1282,19 +1288,17 @@ export const postService_pr0001 = {
                 }
             }
 
-            let new_message_inChat = NEW__dataModels.create_message_in_Chat_or_subChat(
+
+            let new_message_inChat = await chats_functions_localMongo.add_message_inChat_localMongo(
                 parent_owner_Email,
+                parent_owner_ID,
                 parent_corpAccount_ID,
                 parent_project_ID,
-                subProject_ID,  // для чата проекта тут не будет данных - undefined
+                subProject_ID,
 
                 autor_Email,
-                textMessage,
-
-                pointer_current_chat.messages.length, // это будет изместный индекс нового сообщения в реестра
+                textMessage
             );
-
-            pointer_current_chat.messages.push(new_message_inChat);
 
             postServise_answer.mResStatus = 1;   // 1   444
             postServise_answer.comment = "Сообщение в чат успешно добавлено";
@@ -1322,14 +1326,6 @@ export const postService_pr0001 = {
                 console.log(error);
             }
 
-
-
-
-
-
-
-
-
             return postServise_answer;
 
         } catch (error) {
@@ -1345,7 +1341,7 @@ export const postService_pr0001 = {
         }
     },
 
-    delete_one_subProject_PS(req) {
+    async delete_one_subProject_PS(req) {
 
         let postServise_answer = {
             mResStatus: 0,    // варианты кодов: 1 - успешно сохранено, 10, 11, 12 ...
@@ -1377,7 +1373,7 @@ export const postService_pr0001 = {
             // console.log("pointer_parentProject_in_projectsDB= ");
             // console.log(pointer_parentProject_in_projectsDB);
 
-            //  проверяем, является ли пользователь админом, чтобы создать субПроект
+            //  проверяем, является ли пользователь админом, чтобы удалить субПроект
             let check_isUser_adminOrModerator_forCurrentProject = functions___pr0001.isUser_adminOrModerator_forCurrentProject(sender_ofRequest_Email, pointer_parentProject_in_projectsDB);
 
             // если юзеру не разрешено удалять субпроекты в проекте
@@ -1410,18 +1406,15 @@ export const postService_pr0001 = {
 
             // удаляем чат субпроекта
             try {
-                if (serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email]
-                    ?.corpAccounts?.[parent_corpAccount_ID]?.projects?.[parent_project_ID]?.subProjectsChats[subProject_ID]) {
+                let parent_owner_ID = await functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
 
-                    delete serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects[parent_project_ID].subProjectsChats[subProject_ID];
+                await chats_functions_localMongo.delete_subProjectChat_localMongo(
+                    parent_owner_ID,
+                    parent_corpAccount_ID,
+                    parent_project_ID,
+                    subProject_ID
+                );
 
-                    console.log(" ");
-                    console.log("Чат субпроекта успешно удален");
-                }
-                else {
-                    console.log(" ");
-                    console.log("Не найден целевой чат субПроекта при попытке его удаления");
-                }
             } catch (error) {
                 console.log(" ");
                 console.log("Ошибка при попытке удаления чата суброекта");
@@ -1467,7 +1460,7 @@ export const postService_pr0001 = {
         }
     },
 
-    delete_one_project_PS(req) {
+    async delete_one_project_PS(req) {
 
         let postServise_answer = {
             mResStatus: 0,    // варианты кодов: 1 - успешно сохранено, 10, 11, 12 ...
@@ -1521,25 +1514,22 @@ export const postService_pr0001 = {
             }
 
 
-            // удаляем чат проекта и субпроекта
+            // удаляем чат проекта и субпроектов
             try {
-                if (serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email]
-                    ?.corpAccounts?.[parent_corpAccount_ID]?.projects?.[project_ID]) {
+                let parent_owner_ID = await functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
 
-                    delete serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects[project_ID];
+                await chats_functions_localMongo.delete_projectChat_localMongo (
+                    parent_owner_ID,
+                    parent_corpAccount_ID,
+                    project_ID,
+                );
 
-                    console.log(" ");
-                    console.log("Чат проекта и субпроектов успешно удален");
-                }
-                else {
-                    console.log(" ");
-                    console.log("Не найден целевой чат проекта при попытке его удаления");
-                }
             } catch (error) {
                 console.log(" ");
                 console.log("Ошибка при попытке удаления чата проекта");
                 console.log(error);
             }
+
 
             // удаляем из списка доступных проектов других пользователей
             try {
@@ -1614,7 +1604,7 @@ export const postService_pr0001 = {
         }
     },
 
-    delete_one_corpAccaunt_PS(req) {
+    async delete_one_corpAccaunt_PS(req) {
 
         let postServise_answer = {
             mResStatus: 0,    // варианты кодов: 1 - успешно сохранено, 10, 11, 12 ...
@@ -1632,7 +1622,6 @@ export const postService_pr0001 = {
             let parent_owner_Email = req.body.postDataToServer.corpAccount.parent_owner_Email;
             let corpAccount_ID = req.body.postDataToServer.corpAccount.corpAccount_ID;
             let sender_ofRequest_Email = req.body.postDataToServer.sender_ofRequest_Email;
-
 
             let pointer_currentOwnCorpAccount_in_projectsDB = functions___pr0001.get_pointer_current_corpAccount_in_projectsDB(
                 parent_owner_Email,
@@ -1672,23 +1661,18 @@ export const postService_pr0001 = {
                 return postServise_answer;
             }
 
-            // удаляем папку чатов корпАккаунта, со вложенными часами проектов и субпроекта
+            // удаляем чаты корпАккаунта, со вложенными часами проектов и субпроекта
             try {
-                if (serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email]
-                    ?.corpAccounts?.[corpAccount_ID]) {
+                let parent_owner_ID = await functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
 
-                    delete serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[corpAccount_ID];
+                await chats_functions_localMongo.delete_corpAccountChat_localMongo (
+                    parent_owner_ID,
+                    corpAccount_ID,
+                );
 
-                    console.log(" ");
-                    console.log("Чаты корпАккаунта - проектов и субпроектов - успешно удалены");
-                }
-                else {
-                    console.log(" ");
-                    console.log("Не найден целевой чат корпАккаунта");
-                }
             } catch (error) {
                 console.log(" ");
-                console.log("Ошибка при попытке удаления вложенных чатов корпАккаунта");
+                console.log("Ошибка при попытке удаления чата суброекта");
                 console.log(error);
             }
 
@@ -1940,7 +1924,7 @@ export const postService_pr0001 = {
         }
     },
 
-    get_lastMessages_currentChat_PS(req) {
+    async get_lastMessages_currentChat_PS(req) {
 
         let postServise_answer = {
             mResStatus: 0,    // варианты кодов: 1 - успешно сохранено, 10, 11, 12 ...
@@ -1961,8 +1945,6 @@ export const postService_pr0001 = {
             let parent_subProject_ID = req.body.postDataToServer.parent_subProject_ID;
 
             let sender_ofRequest_Email = req.body.postDataToServer.sender_ofRequest_Email;
-
-
 
             //  проверяем, является ли пользователь участником Родительского проекта/субПроекта проекта
             let exist_user_in_team_list = functions___pr0001.is_user_member_ofCurrentProject(
@@ -1989,26 +1971,42 @@ export const postService_pr0001 = {
                 return postServise_answer;
             }
 
-            let needsMessages = [];
+            /*             
+                        УДАЛИТЬ - это для неиспользуемой версии с локальным объектом для чатов
+                        let needsMessages = [];
+                        let pointer_current_chat = functions___pr0001.get_pointer_currentChat(
+                            parent_owner_Email,
+                            parent_corpAccount_ID,
+                            parent_project_ID,
+                            parent_subProject_ID    // в случае чата для Проекта - тут будет undefined
+                        );
+            
+                        // если чат существует, и длинна списка больше, чем указанное количество нужных записей - берем из массива нужное количество последних записей
+                        if (pointer_current_chat?.messages?.length > req.body.postDataToServer.quantityLastMessages) {
+                            needsMessages = pointer_current_chat.messages.slice(-req.body.postDataToServer.quantityLastMessages); // знак отрицания "-" означает извлечение данных с конца массива 
+                        }
+                        else {
+                            // если  если чат существует, и длинна списка меньше, чем количество нужных записей - забираем все записи
+                            if (pointer_current_chat?.messages) {
+                                needsMessages = pointer_current_chat.messages;
+                            }
+                        }
+            */
 
-            let pointer_current_chat = functions___pr0001.get_pointer_currentChat(
+            let parent_owner_ID = functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
+
+            let needsLastMessages_fromLocalMongo = await chats_functions_localMongo.get_last_messages_fromChat_localMongo(
                 parent_owner_Email,
+                parent_owner_ID,
                 parent_corpAccount_ID,
                 parent_project_ID,
-                parent_subProject_ID    // в случае чата для Проекта - тут будет undefined
+                parent_subProject_ID,
+                6
             );
 
-            // если чат существует, и длинна списка больше, чем указанное количество нужных записей - берем из массива нужное количество последних записей
-            if (pointer_current_chat?.messages?.length > req.body.postDataToServer.quantityLastMessages) {
-                needsMessages = pointer_current_chat.messages.slice(-req.body.postDataToServer.quantityLastMessages); // знак отрицания "-" означает извлечение данных с конца массива 
-            }
-            else {
-                // если  если чат существует, и длинна списка меньше, чем количество нужных записей - забираем все записи
-                if (pointer_current_chat?.messages) {
-                    needsMessages = pointer_current_chat.messages;
-                }
-            }
-
+            // console.log(" ");
+            // console.log("needsLastMessages_fromLocalMongo = ");
+            // console.log(needsLastMessages_fromLocalMongo);
 
             // возвращаем ответ из функции
             postServise_answer.mResStatus = 1;
@@ -2016,16 +2014,19 @@ export const postService_pr0001 = {
             postServise_answer.messageForClient = null;
             postServise_answer.dataFromServer = {
                 endPoint: "get_lastMessages_currentChat_PS",
-                // разморачиванием мы копируем только верхние ключи чата
-                ...pointer_current_chat,
 
-                needsMessages: needsMessages,
+                parent_owner_Email,
+                parent_owner_ID,
+                parent_corpAccount_ID,
+                parent_project_ID,
+                parent_subProject_ID,
+
+                needsMessages: needsLastMessages_fromLocalMongo,
             };
-            delete postServise_answer.dataFromServer.messages; // при этом в исходном объекте pointer_current_chat - объект messages не будет удален, поскольку мы использовали поверхностное копирование (...)
 
             // console.log(" ");
-            // console.log("postServise_answer.dataFromServer - get_lastMessages_currentChat_PS:");
-            // console.log(postServise_answer.dataFromServer);
+            // console.log("postServise_answer - get_lastMessages_currentChat_PS:");
+            // console.log(postServise_answer);
 
             return postServise_answer;
 
@@ -2042,7 +2043,7 @@ export const postService_pr0001 = {
         }
     },
 
-    get_PreviousItems_chatList_CurrentProject_PS(req) {
+    async get_PreviousItems_chatList_CurrentProject_PS(req) {
 
         // функция не проверена в работе из-за меленького количества сообщений в чате
 
@@ -2091,35 +2092,47 @@ export const postService_pr0001 = {
                 return postServise_answer;
             }
 
-            let needsMessages = [];
+            /* 
+                        let needsMessages = [];
+                        let pointer_current_chat = functions___pr0001.get_pointer_currentChat(
+                            parent_owner_Email,
+                            parent_corpAccount_ID,
+                            parent_project_ID,
+                            parent_subProject_ID    // в случае чата для Проекта - тут будет undefined
+                        );
+                        // если чат существует, и длинна списка больше, чем указанное количество нужных записей - берем из массива нужное количество последних записей
+                        if (pointer_current_chat) {
+            
+                            // вычисляем, сколько предыдущих сообщений осталось, которые предшествуют указанному TOP-индексу
+                            let currentPreviousIndex = req.body.postDataToServer.currentPreviousIndex; // количество оставшихся предыдущих сообщений, Оно также эквивалентно текущему индексу первого из загруженных ранее клиенту сообщений
+                            let needsQuantityPreviousMessages = req.body.postDataToServer.
+                                needsQuantityPreviousMessages; // необходимое количество сообщений для подгрузки
+                            let beginIndex = currentPreviousIndex - needsQuantityPreviousMessages; // начальный индекс подгрузки
+            
+                            // если  начальный индекс подгрузки >=0 - берем из массива нужное количество предыдущих записей
+                            if (beginIndex >= 0) {
+                                // console.log("Отбираем нужное количество записей, beginIndex= " + beginIndex);
+                                needsMessages = pointer_current_chat.messages.slice(beginIndex, currentPreviousIndex);
+                            }
+                            // иначе, если количество  оставшихся предыдущих сообщений меньше (или равно), чем количество нужных записей - забираем все оставшиеся записи, т.е. если  начальный индекс подгрузки < 0
+                            else {
+                                // console.log("Забираем все оставшиеся записи... ");
+                                needsMessages = pointer_current_chat.messages.slice(0, currentPreviousIndex);
+                            }
+                        }
+            */
 
-            let pointer_current_chat = functions___pr0001.get_pointer_currentChat(
+            let parent_owner_ID = functions___pr0001.get_pointer_currentUserInReestr(parent_owner_Email).user_ID;
+
+            let needsMessages_fromLocalMongoDB = await chats_functions_localMongo.get_previous_messages_fromChat_localMongo(
                 parent_owner_Email,
+                parent_owner_ID,
                 parent_corpAccount_ID,
                 parent_project_ID,
-                parent_subProject_ID    // в случае чата для Проекта - тут будет undefined
+                parent_subProject_ID,
+                req.body.postDataToServer.currentPreviousIndex,
+                2
             );
-
-            // если чат существует, и длинна списка больше, чем указанное количество нужных записей - берем из массива нужное количество последних записей
-            if (pointer_current_chat) {
-
-                // вычисляем, сколько предыдущих сообщений осталось, которые предшествуют указанному TOP-индексу
-                let currentPreviousIndex = req.body.postDataToServer.currentPreviousIndex; // количество оставшихся предыдущих сообщений, Оно также эквивалентно текущему индексу первого из загруженных ранее клиенту сообщений
-                let needsQuantityPreviousMessages = req.body.postDataToServer.
-                    needsQuantityPreviousMessages; // необходимое количество сообщений для подгрузки
-                let beginIndex = currentPreviousIndex - needsQuantityPreviousMessages; // начальный индекс подгрузки
-
-                // если  начальный индекс подгрузки >=0 - берем из массива нужное количество предыдущих записей
-                if (beginIndex >= 0) {
-                    // console.log("Отбираем нужное количество записей, beginIndex= " + beginIndex);
-                    needsMessages = pointer_current_chat.messages.slice(beginIndex, currentPreviousIndex);
-                }
-                // иначе, если количество  оставшихся предыдущих сообщений меньше (или равно), чем количество нужных записей - забираем все оставшиеся записи, т.е. если  начальный индекс подгрузки < 0
-                else {
-                    // console.log("Забираем все оставшиеся записи... ");
-                    needsMessages = pointer_current_chat.messages.slice(0, currentPreviousIndex);
-                }
-            }
 
             // возвращаем ответ из функции
             postServise_answer.mResStatus = 1;
@@ -2127,11 +2140,15 @@ export const postService_pr0001 = {
             postServise_answer.messageForClient = null;
             postServise_answer.dataFromServer = {
                 endPoint: "get_PreviousItems_chatList_CurrentProject_PS",
-                // разморачиванием мы копируем только верхние ключи чата
-                ...pointer_current_chat,
-                needsMessages: needsMessages,
+
+                parent_owner_Email,
+                parent_owner_ID,
+                parent_corpAccount_ID,
+                parent_project_ID,
+                parent_subProject_ID,
+
+                needsMessages: needsMessages_fromLocalMongoDB
             };
-            delete postServise_answer.dataFromServer.messages; // при этом в исходном объекте pointer_current_chat - объект messages не будет удален, поскольку мы использовали поверхностное копирование (...)
 
             // console.log(" ");
             // console.log("postServise_answer.dataFromServer - get_PreviousItems_chatList_CurrentProject_PS:");
@@ -3769,7 +3786,7 @@ export const postService_pr0001 = {
 
 
 }
- 
+
 //----------------------------------
 //----------------------------------
 //----------------------------------
@@ -3793,7 +3810,7 @@ export const functions___pr0001 = {
             if (additional__emodzi_or_name_or_color_emodzi == "pink") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_pink;
 
             return await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.messegeToCurrentTelegramBot(
-                connectionTo_infoTelegramBot, // соединение с Телеграм
+                connectionTo_infoTelegramBot___SERVER_COMBI, // соединение с Телеграм
                 config_serverCombi.adminTelegramAccount_ID_for_information, // мой аккаунт для входящих сообщений
                 config_pr0001.projectNameID, // Название проекта
                 text, // текст сообщения
@@ -4251,90 +4268,90 @@ export const functions___pr0001 = {
     },
 
     //----------------------------------
-
-    get_pointer_currentChat(
-        parent_owner_Email,
-        parent_corpAccount_ID,
-        parent_project_ID,
-        subProject_ID
-    ) {
-
-        try {
-            let pointer_current_chat = null;
-            // если речь идет о чате для Проекта
-            if (!subProject_ID) {
-                pointer_current_chat = serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email]?.corpAccounts[parent_corpAccount_ID]?.projects[parent_project_ID]?.mainProjectChat;
+    /* 
+        get_pointer_currentChat(
+            parent_owner_Email,
+            parent_corpAccount_ID,
+            parent_project_ID,
+            subProject_ID
+        ) {
+    
+            try {
+                let pointer_current_chat = null;
+                // если речь идет о чате для Проекта
+                if (!subProject_ID) {
+                    pointer_current_chat = serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email]?.corpAccounts[parent_corpAccount_ID]?.projects[parent_project_ID]?.mainProjectChat;
+                }
+                // если речь идет о чате для субпроекта, тогда добавляем вложенный объект чата для родительского проекта
+                if (subProject_ID) {
+                    pointer_current_chat = serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email]?.corpAccounts[parent_corpAccount_ID]?.projects[parent_project_ID]?.subProjectsChats[subProject_ID];
+                }
+    
+                return pointer_current_chat;
+    
+            } catch (error) {
+                console.log(" ");
+                console.log("Ошибка в get_pointer_currentChat");
+                console.log(error);
+    
+                return null;
             }
-            // если речь идет о чате для субпроекта, тогда добавляем вложенный объект чата для родительского проекта
-            if (subProject_ID) {
-                pointer_current_chat = serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email]?.corpAccounts[parent_corpAccount_ID]?.projects[parent_project_ID]?.subProjectsChats[subProject_ID];
-            }
-
-            return pointer_current_chat;
-
-        } catch (error) {
-            console.log(" ");
-            console.log("Ошибка в get_pointer_currentChat");
-            console.log(error);
-
-            return null;
-        }
-    },
-
+        },
+     */
     //----------------------------------
-
-    get_pointer_currentChat_OR_create_AND_getPointer_currentChat(
-        parent_owner_Email,
-        parent_corpAccount_ID,
-        parent_project_ID,
-        subProject_ID
-    ) {
-
-        try {
-            let pointer_current_chat = null;
-
-            // сначала проверяем/создаем при необходимости структуру чата до родительского проекта
-            serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email] ??= {};
-            serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts ??= {};
-            serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID] ??= {};
-            serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects ??= {};
-            serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects[parent_project_ID] ??= {
-                mainProjectChat: NEW__dataModels.create_Chat_or_subChat(
-                    parent_owner_Email,
-                    parent_corpAccount_ID,
-                    parent_project_ID
-                ),
-
-                subProjectsChats: {},
-            };
-            // присваиваем переменной ссылку на чат проекта
-            pointer_current_chat = serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects[parent_project_ID].mainProjectChat;
-
-            // далее, если речь идет о чате для субпроекта, тогда добавляем вложенный объект чата для родительского проекта
-            if (subProject_ID) {
-                //при необходимости сначала создаем чат при его отсутствии
-                serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects[parent_project_ID].subProjectsChats[subProject_ID] ??= NEW__dataModels.create_Chat_or_subChat(
-                    parent_owner_Email,
-                    parent_corpAccount_ID,
-                    parent_project_ID,
-                    subProject_ID
-                );
-
-                // переназначаем значение переменной на ссылку на чат субПроекта
-                pointer_current_chat = serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects[parent_project_ID].subProjectsChats[subProject_ID];
+    /* 
+        get_pointer_currentChat_OR_create_AND_getPointer_currentChat(
+            parent_owner_Email,
+            parent_corpAccount_ID,
+            parent_project_ID,
+            subProject_ID
+        ) {
+    
+            try {
+                let pointer_current_chat = null;
+    
+                // сначала проверяем/создаем при необходимости структуру чата до родительского проекта
+                serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email] ??= {};
+                serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts ??= {};
+                serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID] ??= {};
+                serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects ??= {};
+                serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects[parent_project_ID] ??= {
+                    mainProjectChat: NEW__dataModels.create_Chat_or_subChat(
+                        parent_owner_Email,
+                        parent_corpAccount_ID,
+                        parent_project_ID
+                    ),
+    
+                    subProjectsChats: {},
+                };
+                // присваиваем переменной ссылку на чат проекта
+                pointer_current_chat = serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects[parent_project_ID].mainProjectChat;
+    
+                // далее, если речь идет о чате для субпроекта, тогда добавляем вложенный объект чата для родительского проекта
+                if (subProject_ID) {
+                    //при необходимости сначала создаем чат при его отсутствии
+                    serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects[parent_project_ID].subProjectsChats[subProject_ID] ??= NEW__dataModels.create_Chat_or_subChat(
+                        parent_owner_Email,
+                        parent_corpAccount_ID,
+                        parent_project_ID,
+                        subProject_ID
+                    );
+    
+                    // переназначаем значение переменной на ссылку на чат субПроекта
+                    pointer_current_chat = serverVarriorsDataFromBD_pr0001.chat_DB[parent_owner_Email].corpAccounts[parent_corpAccount_ID].projects[parent_project_ID].subProjectsChats[subProject_ID];
+                }
+    
+                return pointer_current_chat;
+    
+            } catch (error) {
+                console.log(" ");
+                console.log("Ошибка в create_Chat_or_subChat");
+                console.log(error);
+    
+                return null;
             }
-
-            return pointer_current_chat;
-
-        } catch (error) {
-            console.log(" ");
-            console.log("Ошибка в create_Chat_or_subChat");
-            console.log(error);
-
-            return null;
-        }
-    },
-
+        },
+     */
     //----------------------------------
 
     getOnlineTimeCurrentUser(user_Email) {

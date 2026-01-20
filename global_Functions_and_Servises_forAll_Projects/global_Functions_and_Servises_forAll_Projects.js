@@ -10,6 +10,7 @@ import util from 'util'; // берем из библиотеки NodeJS - исп
 // import config_serverCombi from '../config_serverCombi.js';
 import TelegramBot from 'node-telegram-bot-api';
 import global_Data_forAllProjects from './global_Data_forAllProjects.js';
+import config_serverCombi from '../config_serverCombi.js';
 
 import dns from 'dns'; // нужно для контроля соединения с Монго ДБ 
 
@@ -353,69 +354,6 @@ export const global_Functions_and_Servises_forAll_Projects = {
             await connectWithRetry();
             return connection;
         },
-        // Старый вариант
-        /* 
-                 async connectToMongoDB(myNameID_ActualProject, mongoURL_actualProject) {
-                    let connection;
-            
-                    // Это вариант от  16-17.10.2025, откорректированный с чатом GPT
-                    const connectWithRetry = () => {
-                        console.log(`${myNameID_ActualProject} - попытка подключения к MongoDB...`);
-            
-                        try {
-        
-                            connection = mongoose.createConnection(mongoURL_actualProject, {
-                                useNewUrlParser: true,
-                                useUnifiedTopology: true,
-                                serverSelectionTimeoutMS: 10000, // максимум 10 секунд на попытку
-                                connectTimeoutMS: 10000,
-                            });
-            
-                            connection.on('connected', () => {
-                                console.log(`${myNameID_ActualProject} - Mongoose подключен к MongoDB`);
-                            });
-            
-                            connection.on('disconnected', () => {
-                                console.warn(`${myNameID_ActualProject} - Mongoose потерял соединение, новая попытка через 5 сек...`);
-                                setTimeout(connectWithRetry, 5000);
-                            });
-            
-                            connection.on('error', (err) => {
-                                console.error(`${myNameID_ActualProject} - Ошибка подключения Mongoose:`, err.message);
-            
-                                // Отлавливаем DNS-ошибки и таймауты
-                                if (err.code === 'ETIMEOUT' || err.code === 'ECONNREFUSED' || err.code === 'ENOTFOUND') {
-                                    console.log(`${myNameID_ActualProject} - DNS/сетевой сбой, повторная попытка через 5 секунд...`);
-                                    connection.removeAllListeners();
-                                    setTimeout(connectWithRetry, 5000);
-                                    return;
-                                }
-            
-                                // Прочие ошибки просто логируем
-                                console.log(`${myNameID_ActualProject} - Непредвиденная ошибка, сервер продолжает работу`);
-                            });
-            
-                            connection.on('reconnected', () => {
-                                console.log(`${myNameID_ActualProject} - Mongoose переподключен к MongoDB`);
-                            });
-            
-                            connection.on('close', () => {
-                                console.warn(`${myNameID_ActualProject} - Соединение закрыто`);
-                            });
-                        } catch (err) {
-                            // На случай, если ошибка вылетела синхронно (редко, но бывает)
-                            console.error(`${myNameID_ActualProject} - Исключение при попытке подключения:`, err);
-                            setTimeout(connectWithRetry, 5000);
-                        }
-                    };
-            
-                    // первая попытка
-                    connectWithRetry();
-            
-                    // возвращаем "живой" объект (он сам будет обновляться при переподключении)
-                    return connection;
-                }
-         */
 
         async export_And_ZIP_LocalFile_ToMongoDB(
             myNameID_ActualProject, // имя_ID проекта
@@ -557,82 +495,6 @@ export const global_Functions_and_Servises_forAll_Projects = {
             }
         },
 
-        // Старый вариант
-        /* 
-                 async export_And_ZIP_LocalFile_ToMongoDB(
-                    myNameID_ActualProject, // имя_ID проекта
-                    connectionToMongo_actualProject, // соединение к необходимой БД Монго
-                    local_files_forder_Adress, // адрес расположеия файлов проекта, без имени файла
-                    file_Name // имя файла
-                ) {
-                    return new Promise(async (resolve, reject) => {
-                        try {
-                            const fileNameAndAdress = global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.get_valid_adress_fileOrFolder(local_files_forder_Adress + file_Name);
-        
-                            // Проверка на существование файла
-                            if (!fs.existsSync(fileNameAndAdress)) {
-                                // console.log(`Ошибка в export_And_ZIP_LocalFile_ToMongoDB - Файл ${fileNameAndAdress} не найден`);
-                                return resolve(null); // Выходим, если файл не найден
-                            }
-        
-                            // Предварительно удаляем одноименный файл с МонгоДБ
-                            await global_Functions_and_Servises_forAll_Projects.mongoDB_accessAndService_forAllProjects.deleteFiles_FromMongoDB(
-                                connectionToMongo_actualProject,
-                                file_Name
-                            );
-                            // console.log(myNameID_ActualProject + ": Предыдущий файл (файлы) при его наличии был удален, начинаем закачку нового файла");
-        
-                            const bucket = new GridFSBucket(connectionToMongo_actualProject.db, {
-                                // bucketName: 'dataFromLocalFile'
-                                bucketName: 'mBuket_' + file_Name + "_ZIP"
-                            });
-                            // Запись файла в GridFS
-                            const uploadStream = bucket.openUploadStream(file_Name + "_ZIP");
-                            uploadStream.on('error', (error) => {
-                                console.error('Ошибка в uploadStream:', error);
-                                return resolve(null);
-                            });
-        
-                            // Создание потока чтения из файла
-                            const readStream = fs.createReadStream(fileNameAndAdress);
-                            readStream.on('error', () => {
-                                console.error('Ошибка в readStream:', error);
-                                return resolve(null);
-                            });
-        
-                            // Создание потока сжатия данных с помощью gzip
-                            const gzip = zlib.createGzip();
-                            gzip.on('error', () => {
-                                console.error('Ошибка в gzip:', error);
-                                return resolve(null);
-                            });
-        
-                            // Связываем потоки: readStream -> gzip -> uploadStream (GridFS)    
-                            readStream.pipe(gzip).pipe(uploadStream);
-                            uploadStream.on('finish', () => {
-                                // console.log(myNameID_ActualProject + ': File ' + file_Name + ' was successfully  compressed and uploaded to GridFS!');
-                                return resolve('export_And_ZIP_LocalFile_ToMongoDB - ok');
-                            });
-        
-        
-                            // Таймаут защиты от зависания: если загрузка не закончилась зауказанное время — считаем ошибкой                  
-                            const timeoutProtect = setTimeout(() => {
-                                console.log("Ошибка сохранения файла в Монго ДБ: " + { myNameID_ActualProject });
-                                return resolve(null);
-                            }, 7200000);
-                            // Сброс таймаута при finish / error
-                            uploadStream.on('finish', () => clearTimeout(timeoutProtect));
-                            uploadStream.on('error', () => clearTimeout(timeoutProtect));
-        
-                        } catch (error) {
-                            console.log(myNameID_ActualProject + ': Ошибка в export_And_ZIP_LocalFile_ToMongoDB');
-                            console.log(error);
-                            return resolve(null);
-                        }
-                    })
-                }
-                 */
-
 
         async deleteFiles_FromMongoDB(connectionToMongo_actualProject, file_Name) {
             try {
@@ -695,7 +557,11 @@ export const global_Functions_and_Servises_forAll_Projects = {
             emodzi,  // емодзи
             keyBoardParams // это передаваемая клавиатура для телеграм-Бота
         ) {
-            
+
+            // console.log(" ");
+            // console.log("Запуск messegeToCurrentTelegramBot, arguments =");
+            // console.log(arguments);
+
             return new Promise(async (resolve, reject) => {
                 try {
                     await connection_to_CurrentTelegramBot.sendMessage(
@@ -797,5 +663,69 @@ export const global_Functions_and_Servises_forAll_Projects = {
         return Array.isArray(mVar);
     },
 
-
 }
+
+
+// =================================
+/* 
+// вначале подключаемся к Телеграм-боту
+export let connectionTo_infoTelegramBot___SERVER_COMBI = null;
+try {
+    // для избежания двойного подключения к одному боту во время запуска одновременно двух серверов, ставим проверку
+    if (!connectionTo_infoTelegramBot___SERVER_COMBI) {
+        connectionTo_infoTelegramBot___SERVER_COMBI = global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.setConnectionCurrentTelegramBot(
+            config_serverCombi.telegramAccessToken___combi_server___infoBot
+        );
+
+        console.log(" ");
+        console.log("=== Установлено соединение с Телеграм ИНФО-БОТОМ из server_combi");
+    }
+} catch (error) {
+    console.log(" ");
+    console.log("=== ОШИБКА ПОДКЛЮЧЕНИЯ К ИНФО-БОТУ");
+    console.log(error);
+}
+
+// эта ОТДЕЛЬНАЯ функция для отправки стандартизиртных служебные сообщения от Сервера Комби
+export async function sendTelegramInfo_from___SERVER_COMBI(
+    text,
+    additional__emodzi_or_name_or_color_emodzi) {
+
+    console.log(" "); 
+    console.log("Запуск sendTelegramInfo_from___SERVER_COMBI, arguments =");
+    console.log(arguments);
+
+    try {
+        let secondEmodzi = additional__emodzi_or_name_or_color_emodzi ? additional__emodzi_or_name_or_color_emodzi : "";  // тут указываем дополнительное инфо емодзи к основному емодзи 
+
+        if (additional__emodzi_or_name_or_color_emodzi == "green") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_green;
+        if (additional__emodzi_or_name_or_color_emodzi == "yellow") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_yellow;
+        if (additional__emodzi_or_name_or_color_emodzi == "red") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_red;
+        if (additional__emodzi_or_name_or_color_emodzi == "blue") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_blue;
+
+        if (additional__emodzi_or_name_or_color_emodzi == "white") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_white;
+        if (additional__emodzi_or_name_or_color_emodzi == "black") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_black;
+        if (additional__emodzi_or_name_or_color_emodzi == "brown") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_brown;
+        if (additional__emodzi_or_name_or_color_emodzi == "light_blue") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_light_blue;
+        if (additional__emodzi_or_name_or_color_emodzi == "pink") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_pink;
+
+        return await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.messegeToCurrentTelegramBot(
+            connectionTo_infoTelegramBot___SERVER_COMBI, // соединение с Телеграм
+            config_serverCombi.adminTelegramAccount_ID_for_information, // мой аккаунт для входящих сообщений
+            config_serverCombi.projectNameID, // Название проекта
+            text, // текст сообщения
+            (config_serverCombi.emodziListTelegram_currentProject.default_currentProjectEmodzi + secondEmodzi + " ") //емодзи из переменной, из списка 
+        )
+
+    } catch (error) {
+        console.log("Ошибка отправки сообщения Telegram из sendTelegramInfo_from___SERVER_COMBI");
+        console.log(error);
+    }
+}
+ */
+
+
+
+
+
+

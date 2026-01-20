@@ -1,11 +1,13 @@
 
 import WebSocket from 'ws';
 import config_pr0002 from './config_pr0002.js';
-import {global_Functions_and_Servises_forAll_Projects} from '../global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
+
+import { global_Functions_and_Servises_forAll_Projects } from '../global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
+
 import { first_LoadData_pr0002 } from './saveAndLoadDataServise_pr0002.js';
 import config_serverCombi from '../config_serverCombi.js';
 
-import { connectionTo_infoTelegramBot } from '../server.js';
+import { connectionTo_infoTelegramBot___SERVER_COMBI} from '../infoBotTelegram___server_combi.js';
 
 // эта пустая переменная нужна, чтобы связать этот файл с главным модулем комбиСервера
 export const mExportImportLink_postService_pr0002 = 'qwe'
@@ -67,7 +69,7 @@ export const varrsAndData_pr0002 = {
 
 async function proc___postService_pr0002() {
 
-    if (config_serverCombi.localDebugProcess) return; // в режиме отладки прерываем процесс
+    if (config_serverCombi.localDebugProcess) return; // в режиме отладки прерываем процесс работы сервиса, поскольку он работает в облаке
 
     // console.log("ЗАПУСК postService_pr0002 ");
     // подключаемся к телеграм боту для получения оповещений
@@ -76,6 +78,10 @@ async function proc___postService_pr0002() {
 
     try {
         if (connection_to_telegramBot___BTC_USD_signal_pr0002) {
+
+            console.log(" ");
+            console.log("Запускаем подключение к боту из proc___postService_pr0002 ");
+
             connection_to_telegramBot___BTC_USD_signal_pr0002 = global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.setConnectionCurrentTelegramBot(config_pr0002.telegramAccessToken___BTC_USD_signal);
             // Запускаем слушатель ТелеграмБота
             // global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.listenerCurrentTelegramBot(connection_to_telegramBot___BTC_USD_signal_pr0002);
@@ -130,7 +136,7 @@ async function proc___postService_pr0002() {
     // загружаем сохраненные данные при запуске приложения
     // await first_LoadData_pr0002();
 
-    // отправляем себе инфо сообщение, с задержкой, чтобы успели инициализироваться  переменная connectionTo_infoTelegramBot при перекрестных импортах
+    // отправляем себе инфо сообщение, с задержкой, чтобы успели инициализироваться  переменная connectionTo_infoTelegramBot___SERVER_COMBI при перекрестных импортах
     setTimeout(() => {
         sendTelegramInfo_from_pr0002("pr_0002 запущен", "white")
     }, 1000);
@@ -998,7 +1004,7 @@ async function proc___postService_pr0002() {
         while (true) { // это бесконечный цикл, выполняет свой блок кода постоянно, пока не произойдёт явный выход из него (break, return, throw и т.п.).  
             // 🔁 Ждём 10 секунд перед следующей итерацией
             await new Promise(resolve => setTimeout(resolve, 300000));
-            
+
             // console.log(' ');
             // console.log('Запуск checkRepeatAlerts_forAll_Users()');
 
@@ -1036,7 +1042,7 @@ export async function sendTelegramInfo_from_pr0002(text, additional__emodzi_or_n
         if (additional__emodzi_or_name_or_color_emodzi == "pink") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_pink;
 
         return await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.messegeToCurrentTelegramBot(
-            connectionTo_infoTelegramBot, // соединение с Телеграм
+            connectionTo_infoTelegramBot___SERVER_COMBI, // соединение с Телеграм
             config_serverCombi.adminTelegramAccount_ID_for_information, // мой аккаунт для входящих сообщений
             config_pr0002.projectNameID, // Название проекта
             text, // текст сообщения

@@ -1,4 +1,5 @@
 
+import config_serverCombi from '../config_serverCombi.js';
 
 const projectNameID = "pr0003";
 
@@ -12,14 +13,18 @@ const config_pr0003 = {
     // путь к папке с пользовательскими файлами
     usersDownloadFilesAdress: '../DataBasesAllProjects/DataBase_' + projectNameID + '/usersDownloadFiles/',
 
+    telegramAccessToken___pr0003___infoBot: config_serverCombi.localDebugProcess
+        ? '8259628816:AAHcOAUN2qSF2H6DoDIcjOpH9H3C9gWJ9Fk'
+        : '8537878955:AAFM9V7zeHvm6f1I5gA9U0TJKwgcQYejeDY',
+
     // clientAdress: 'http://localhost:3000',
     clientAdress: "ole-t.github.io/lite_PM",
 
-    // mainServerAdress: "https://mserver.in.net/pr0001",
-    mainServerAdress: "http://localhost:5075/pr0001",
+    mainServerAdress: config_serverCombi.localDebugProcess
+        ? "http://localhost:5075/pr0001"
+        : "https://mserver.in.net/pr0001",
 
-
-    intervalSaveData_localDisk:600000,  //  600000,  // раз в 10 мин 600000
+    intervalSaveData_localDisk: 600000,  //  600000,  // раз в 10 мин 600000
 
     emodziListTelegram_currentProject: {
         default_currentProjectEmodzi: '⚡️',
@@ -51,7 +56,7 @@ const config_pr0003 = {
 
 
     emodziListTelegram_currentProject: {
-        default_currentProjectEmodzi: '💼',  //  '💾',
+        default_currentProjectEmodzi: '💾',
 
         variants: '🖥️  💻 📈  📉 📊 ✅ 🔄 📅 💼 🆕 ⚠️  ❗ 🛑 ⛔  💲 ₿  🏆 🔴 🔵 🟥 🟨 🟩 🟦            🟥 🟧 🟨 🟩 🟦 🟪 ⬛️ ⬜️ 🟫            📒 📕 📗 📘 📙        🟣 🔵 🟢 🟡 🔴           🔴 🟠 🟡 🟢 🔵 🟣 ⚪️ 🟤   💚 💜 💙 💛         🩷 ❤️ 🧡 💚 🩵 💙 💜 🩶 🤍 🤎 💔      ⚡️ 🔥 🍏 🍎  ❤️‍🔥 ❤️‍🩹 💗 🔺 🔻 🔸 🔹 🔶 🔷 🔳 ◻️  ♥️    ❌         👌 ',
     },

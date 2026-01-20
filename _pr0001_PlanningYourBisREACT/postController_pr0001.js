@@ -98,7 +98,7 @@ export const postController_pr0001 = {
     //---------
     async new_message_in_chat_PC(req, res) {
         try {
-            const postServise_answer = postService_pr0001.new_message_in_chat_PS(req);
+            const postServise_answer = await postService_pr0001.new_message_in_chat_PS(req);
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
             }
@@ -112,7 +112,7 @@ export const postController_pr0001 = {
     //---------
     async get_lastMessages_currentChat_PC(req, res) {
         try {
-            const postServise_answer = postService_pr0001.get_lastMessages_currentChat_PS(req);
+            const postServise_answer = await postService_pr0001.get_lastMessages_currentChat_PS(req);
 
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
@@ -128,7 +128,7 @@ export const postController_pr0001 = {
     //---------
     async get_PreviousItems_chatList_CurrentProject_PC(req, res) {
         try {
-            const postServise_answer = postService_pr0001.get_PreviousItems_chatList_CurrentProject_PS(req);
+            const postServise_answer = await postService_pr0001.get_PreviousItems_chatList_CurrentProject_PS(req);
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
             }
@@ -142,7 +142,7 @@ export const postController_pr0001 = {
     //---------
     async delete_one_project_PC(req, res) {
         try {
-            const postServise_answer = postService_pr0001.delete_one_project_PS(req);
+            const postServise_answer = await postService_pr0001.delete_one_project_PS(req);
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
             }
@@ -156,7 +156,7 @@ export const postController_pr0001 = {
     //---------
     async delete_one_subProject_PC(req, res) {
         try {
-            const postServise_answer = postService_pr0001.delete_one_subProject_PS(req);
+            const postServise_answer = await postService_pr0001.delete_one_subProject_PS(req);
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
             }
@@ -369,7 +369,7 @@ export const postController_pr0001 = {
     //---------
     async delete_oneCorpAccount_PC(req, res) {
         try {
-            const postServise_answer =  postService_pr0001.delete_one_corpAccaunt_PS(req);
+            const postServise_answer = await postService_pr0001.delete_one_corpAccaunt_PS(req);
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
             }
@@ -397,7 +397,7 @@ export const postController_pr0001 = {
     //---------
     async restore_ownerCorpAccount_PC(req, res) {
         try {
-            const postServise_answer =  postService_pr0001.restore_ownerCorpAccount_PS(req);
+            const postServise_answer = postService_pr0001.restore_ownerCorpAccount_PS(req);
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
             }
@@ -411,7 +411,7 @@ export const postController_pr0001 = {
 
     //========================
     // Обработчики для уведомлений
-    
+
     async timeUpdate_wasReadChat_PC(req, res) {
         try {
             const postServise_answer = postService_pr0001.timeUpdate_wasReadChat_PS(req);
@@ -429,7 +429,7 @@ export const postController_pr0001 = {
     // видимо функция замененв на униерсальн функцию для проектов и субПроектов
     async timeUpdate_wasReadProjectSettings_PC(req, res) {
         try {
-            const postServise_answer =  postService_pr0001.timeUpdate_wasReadProjectSettings_PS(req);
+            const postServise_answer = postService_pr0001.timeUpdate_wasReadProjectSettings_PS(req);
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
             }
@@ -459,7 +459,7 @@ export const postController_pr0001 = {
     // видимо функция замененв на униерсальн функцию для проектов и субПроектов
     async timeUpdate_wasRead_subProject_settings_PC(req, res) {
         try {
-            const postServise_answer =  postService_pr0001.timeUpdate_wasRead_subProject_settings_PS(req);
+            const postServise_answer = postService_pr0001.timeUpdate_wasRead_subProject_settings_PS(req);
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
             }
@@ -499,7 +499,7 @@ export const postController_pr0001 = {
     //---------
     async logOutOneGadget_PC(req, res) {
         try {
-            const postServise_answer =  postService_pr0001.logOutOneGadget_PS(req);
+            const postServise_answer = postService_pr0001.logOutOneGadget_PS(req);
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
             }
@@ -513,7 +513,7 @@ export const postController_pr0001 = {
     //---------
     async logOutAllGadgets_PC(req, res) {
         try {
-            const postServise_answer =  postService_pr0001.logOutAllGadgets_PS(req);
+            const postServise_answer = postService_pr0001.logOutAllGadgets_PS(req);
             if (postServise_answer.mResStatus === 1) {
                 res.status(200).json(postServise_answer.dataFromServer);
             }
@@ -546,7 +546,7 @@ export const postController_pr0001 = {
             res.status(500).json("Server error, access_toProjectFiles_PC___pr0001, from catch");
         }
     },
-    
+
 }
 
 

@@ -15,7 +15,7 @@ const config_pr0001 = {
     // названия файлов с данными
     mFileName___usersReestr: projectNameID + "__usersReestr.json",
     mFileName___projectsDB: projectNameID + "__projectsDB.json",
-    mFileName___chatDB: projectNameID + "__chatDB.json",    
+    mFileName___chatDB: projectNameID + "__chatDB.json",
 
 
     // clientAdress: 'http://localhost:3000',
@@ -29,24 +29,27 @@ const config_pr0001 = {
     intervalSaveData_localDisk: 600000,  // раз в 10 мин  600000
     intervalSaveData_mongoDB: 3600000,  // раз в час 3600000
 
-    filesServerPort: "https://mserver.in.net/pr0003",
     // в режиме отладки переключаем на локальный
-    filesServerPort: config_serverCombi.localDebugProcess ? "http://localhost:5075/pr0003" : "https://mserver.in.net/pr0003",
+    filesServerPort: config_serverCombi.localDebugProcess
+        ? "http://localhost:5076/pr0003"
+        : "https://mserver.in.net/pr0003", // ТУТ СОДДАТЬ НОВЫЙ ДОМЕН
 
-  
     //  список ЕндПоинтов, которые не требуют Токен доступа
     exclusionaryEndpoints: [
         "/changePassword",
         "/logIn",
         '/get_full_data_from_server',
         '/needDownload_clientsContractsData_fromGitHub',
-
     ],
-
 
     // Доступ к МонгоДБ
     // Важно!- к основному адресу дописываем имя нашей БД, которую бы создали в Mongo (bd_pr0001)
     mMongoURL_pr0001: 'mongodb+srv://admin:ksjdf6766767GHGGHJHH@cluster-pr0001.vsenbpi.mongodb.net/bd_pr0001',
+
+    // это доступ к локальной монгоДБ
+    local_MongoURL_pr0001_chats: 'mongodb://127.0.0.1:27017/pr0001_chats', // pr0001_DB — имя базы данных. Она создастся автоматически при первом сохранении данных.
+
+
 
     githab_cms_repo_pr0001: {
         OWNER: "ole-t",        // имя пользователя или организации

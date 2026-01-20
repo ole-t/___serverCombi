@@ -1,17 +1,35 @@
 
 
 import fs from 'fs';
+import Busboy from "busboy";
 
 import config_pr0003 from './config_pr0003.js';
 import config_serverCombi from '../config_serverCombi.js';
-
 import { global_Functions_and_Servises_forAll_Projects } from '../global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
 import { first_LoadData_pr0003 } from './saveAndLoadDataServise_pr0003.js';
-
 import { accessToFiles_forUsers } from './accessToFiles_forUsers.js';
-import { connectionTo_infoTelegramBot } from '../server.js';
 import { add_data_to_input_steck_deleting_projects_and_corpAccounts } from './deleteClientsDeadsFiles_service_pr0003.js';
 
+console.log(" ");
+console.log("=== === ЗАПУСК  postService_pr0003.js");
+
+
+export let connectionTo_infoTelegramBot___pr0003 = null;
+try {
+    console.log(" ");
+    console.log("+++ Попытка подключения connectionTo_infoTelegramBot___pr0003");
+
+    connectionTo_infoTelegramBot___pr0003 = global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.setConnectionCurrentTelegramBot(
+        config_pr0003.telegramAccessToken___pr0003___infoBot
+    );
+
+    console.log(" ");
+    console.log("=== Установлено соединение с Телеграм ИНФО-БОТОМ - pr0003");
+} catch (error) {
+    console.log(" ");
+    console.log("=== ОШИБКА ПОДКЛЮЧЕНИЯ К ИНФО-БОТУ - pr0003");
+    console.log(error);
+}
 
 // переменные сервера помещаем в объект, чтобы можно ссылаться на них в качестве указателя
 export const vars_and_functions___pr0003 = {
@@ -116,9 +134,9 @@ export const vars_and_functions___pr0003 = {
 
     create_newFileItem_inFilesReestr: (mArgObj) => {
         try {
-            // console.log(" ");
-            // console.log("Запуск create_newFileItem_inFilesReestr, mArgObj=");
-            // console.log(mArgObj);
+            console.log(" ");
+            console.log("Запуск create_newFileItem_inFilesReestr, mArgObj=");
+            console.log(mArgObj);
 
             // проверяем размер файла на числовое значение
             if (typeof mArgObj.file_Size !== "number" || Number.isNaN(mArgObj.file_Size)) {
@@ -190,6 +208,8 @@ export const vars_and_functions___pr0003 = {
             // пересчитываем фактический объем файлов в глобальном хранилище
             vars_and_functions___pr0003.usersFiles_Reestr._usedTotalSpaceForAllClientsFiles = vars_and_functions___pr0003.usersFiles_Reestr._usedTotalSpaceForAllClientsFiles + mArgObj.file_Size;
 
+            // Проверить тут - mArgObj.file_Size
+
             // console.log(" ");
             // console.log("vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.user_Email].corpAccounts[mArgObj.corpAccount_ID].projects[mArgObj.project_ID].files=");
             // console.log(vars_and_functions___pr0003.usersFiles_Reestr[mArgObj.owner_Email].corpAccounts[mArgObj.corpAccount_ID].projects[mArgObj.project_ID].files);
@@ -260,7 +280,7 @@ export const vars_and_functions___pr0003 = {
             if (additional__emodzi_or_name_or_color_emodzi == "pink") secondEmodzi = " " + config_serverCombi.emodziListTelegram_currentProject.variants.circle_pink;
 
             return await global_Functions_and_Servises_forAll_Projects.telegramBot_Servise.messegeToCurrentTelegramBot(
-                connectionTo_infoTelegramBot, // соединение с Телеграм
+                connectionTo_infoTelegramBot___pr0003, // соединение с Телеграм
                 config_serverCombi.adminTelegramAccount_ID_for_information, // мой аккаунт для входящих сообщений
                 config_pr0003.projectNameID, // Название проекта
                 text, // текст сообщения
@@ -329,10 +349,10 @@ export const vars_and_functions___pr0003 = {
 
                 let carrentUsedProcents = vars_and_functions___pr0003.usersFiles_Reestr._usedTotalSpaceForAllClientsFiles / config_pr0003.maxTotalSpaceInServerForFiles * 100;
 
-                // console.log(" ");
-                // console.log("Запуск controlOverflow_andInfoMessages");
-                // console.log("_usedTotalSpaceForAllClientsFiles = " + vars_and_functions___pr0003.usersFiles_Reestr._usedTotalSpaceForAllClientsFiles);
-                // console.log("maxTotalSpaceInServerForFiles = " + config_pr0003.maxTotalSpaceInServerForFiles);
+                console.log(" ");
+                console.log("Запуск controlOverflow_andInfoMessages");
+                console.log("_usedTotalSpaceForAllClientsFiles = " + vars_and_functions___pr0003.usersFiles_Reestr._usedTotalSpaceForAllClientsFiles);
+                console.log("maxTotalSpaceInServerForFiles = " + config_pr0003.maxTotalSpaceInServerForFiles);
 
                 vars_and_functions___pr0003.sendTelegramInfo_from_pr0003(
                     "Заполнение дискового места = " + Math.round(carrentUsedProcents) + " % ( = " + Math.round(vars_and_functions___pr0003.usersFiles_Reestr._usedTotalSpaceForAllClientsFiles / 1000) + " кБайт)",
@@ -438,146 +458,193 @@ await first_LoadData_pr0003();
 export const postService_pr0003 = {
 
     async uploadOneFileToServer_PS(req) {
+
         let postServise_answer = {
             comment: " ",
-            mResStatus: 0, // варианты кодов: 1-успешно сохранено, 10, 11, 12 ...   
-            // также сюда поместим ответ сервера
+            mResStatus: 0,
         };
 
         try {
-            // запрашиваем права доступра для данного пользователя
-            const accessToWork_vs_files_data = await accessToFiles_forUsers.access_toUploadFilesToServer_forUser(
-                {
-                    ...req.body,
-                    // добавляем accessToken, указанный в заголовке запроса
-                    accessToken_fromHeader: req.headers.accesstoken,
-                },
-                req, // нужен, т.к. в нем находится передаваемый файл и его параметры для валидации
-            );
+            const busboy = Busboy({ headers: req.headers });
 
-            // console.log(" ");
-            // console.log("accessToWork_vs_files_data  из uploadOneFileToServer_PS = ");
-            // console.log(accessToWork_vs_files_data);
+            let postDataToServer = null;
+            let accessToWork_vs_files_data = null;
 
-            if (!accessToWork_vs_files_data?.userAccessToCurrentFilesManipulations) {
-                console.log(" ");
-                console.log("Отказано в доступе: ");
-                console.log(accessToWork_vs_files_data?.comment);
+            let fileWriteFinished = false;
+            let real_file_Size = 0;
 
-                postServise_answer.comment = accessToWork_vs_files_data.comment; // "user has not access to project";
-                postServise_answer.mResStatus = 0;
-                return postServise_answer;
-            }
+            let file_ID = null;
+            let fileFullNameByID = null;
+            let endOfFileName = null;
+            let file_Name = null;
 
-            // если проверки пройдены - сохраняем файл на диск
-            const owner_Email = req.body.owner_Email;
-            const owner_ID = accessToWork_vs_files_data.data_fromMainServer.ownerData.owner_ID;
+            const fileWritePromises = []; // массив промисов для ожидания записи
 
-            const user_Email = req.body.user_Email;
-            // const user_ID = accessToWork_vs_files_data.userData.user_ID;
+            // ─────────────────────────────
+            // читаем поля (JSON с клиента)
+            // ─────────────────────────────
+            busboy.on('field', (fieldname, value) => {
+                if (fieldname === 'postDataToServer_Obj_stringify') {
+                    try {
+                        postDataToServer = JSON.parse(value);
 
-            const corpAccount_ID = req.body.corpAccount_ID;
-            const project_ID = req.body.project_ID;
-            const file_Name = req.body.file_NameFor_UTF8;
-            const newFile = req.files.m_oneFile;
-            const file_Size = newFile.size;
+                        console.log("postDataToServer =");
+                        console.log(postDataToServer);
+                    } catch (e) {
+                        throw new Error("Invalid JSON in postDataToServer_Obj_stringify");
+                    }
+                }
+            });
 
-            // console.log("newFile= ");
-            // console.log(newFile);
+            // ─────────────────────────────
+            // читаем файл
+            // ─────────────────────────────
+            busboy.on('file', (fieldname, file, filename) => {
 
-            // создаем папку для файлов проекта
-            const pathSaveFile = await global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.createDir_andAll_intermediateDirectories(
-                config_pr0003.usersDownloadFilesAdress + '/' +
-                owner_ID + '/' +
-                corpAccount_ID + '/' +
-                project_ID
-            );
+                if (!postDataToServer) {
+                    file.resume();
+                    return fileWritePromises.push(Promise.reject(new Error("postDataToServer not received before file")));
+                }
 
-            if (!pathSaveFile) {
-                postServise_answer.comment = "error in createDir";
-                postServise_answer.mResStatus = 0;
-                return postServise_answer;
-            }
+                const filePromise = new Promise(async (resolve, reject) => {
+                    try {
+                        // проверка прав доступа
+                        accessToWork_vs_files_data =
+                            await accessToFiles_forUsers.access_toUploadFilesToServer_forUser(
+                                {
+                                    ...postDataToServer,
+                                    accessToken_fromHeader: postDataToServer.accessToken,
+                                }
+                            );
 
-            const arrayOfName = file_Name.split(".");
-            // выявляем расширение файла                    
-            const endOfFileName = arrayOfName[arrayOfName.length - 1];
-            // выявляем имя файла без расширения
-            const clearName = arrayOfName.slice(0, arrayOfName.length - 1);
-            // производим фактическую запись файлов на диск:
-            // в качестве имени файла на сервере используем ID + расширение файла
-            const file_ID = global_Functions_and_Servises_forAll_Projects.random_id();
-            const fileFullNameByID = `${file_ID}.${endOfFileName}`;
-            const fullPathAndName = `${pathSaveFile}/${fileFullNameByID}`;
+                        if (!accessToWork_vs_files_data?.userAccessToCurrentFilesManipulations) {
+                            file.resume();
+                            return reject(new Error(accessToWork_vs_files_data?.comment || "Access denied"));
+                        }
 
-            // далее запись файла на диск:
-            try {
-                // оборачиваем newFile.mv в промис, чтобы можно было использовать await
-                await new Promise((resolve, reject) => {
-                    newFile.mv(fullPathAndName, (err) => {
-                        if (err) return reject(err);
-                        resolve();
-                    });
+                        console.log(" ");
+                        console.log("accessToWork_vs_files_data =");
+                        console.log(accessToWork_vs_files_data);
+
+                        const owner_ID = accessToWork_vs_files_data.data_fromMainServer.ownerData.owner_ID;
+
+                        const {
+                            owner_Email,
+                            user_Email,
+                            corpAccount_ID,
+                            project_ID,
+                            file_NameFor_UTF8,
+                        } = postDataToServer;
+
+                        file_Name = file_NameFor_UTF8;
+
+                        // формирование пути
+                        const pathSaveFile =
+                            await global_Functions_and_Servises_forAll_Projects
+                                .files_loadAndSave_service
+                                .createDir_andAll_intermediateDirectories(
+                                    config_pr0003.usersDownloadFilesAdress + '/' +
+                                    owner_ID + '/' +
+                                    corpAccount_ID + '/' +
+                                    project_ID
+                                );
+
+                        if (!pathSaveFile) {
+                            file.resume();
+                            return reject(new Error("error in createDir"));
+                        }
+
+                        const arrayOfName = file_Name.split(".");
+                        endOfFileName = arrayOfName[arrayOfName.length - 1];
+
+                        file_ID = global_Functions_and_Servises_forAll_Projects.random_id();
+                        fileFullNameByID = `${file_ID}.${endOfFileName}`;
+
+                        const fullPathAndName = `${pathSaveFile}/${fileFullNameByID}`;
+
+                        const writeStream = fs.createWriteStream(fullPathAndName);
+
+                        file.on('data', chunk => {
+                            real_file_Size += chunk.length;
+
+                            // проверка превышения заявленного размера
+                            if (postDataToServer.file_Size && (real_file_Size > postDataToServer.file_Size)) {
+                                file.unpipe(writeStream); // отключаем поток
+                                writeStream.destroy();   // прерываем запись
+                                file.resume();           // сбрасываем оставшиеся данные
+
+                                vars_and_functions___pr0003.sendTelegramInfo_from_pr0003("Превышен заявленный клиентом размер файла !!!  Отправитель: " + postDataToServer.user_Email, "red");
+
+                                return reject(new Error(`File size exceeded: expected ${postDataToServer.file_Size}, got >${real_file_Size}`));
+                            }
+
+                        });
+
+                        file.pipe(writeStream);
+
+                        writeStream.on('finish', () => {
+                            fileWriteFinished = true;
+                            resolve();
+                        });
+
+                        writeStream.on('error', reject);
+
+                    } catch (error) {
+                        reject(error);
+                    }
                 });
 
-                // console.log("Файл успешно сохранен");
+                fileWritePromises.push(filePromise);
+            });
 
-                // В случ успешной загрузки - Добавляем информацию о файле в реестр файлов
-                try {
-                    vars_and_functions___pr0003.create_newFileItem_inFilesReestr({
-                        // данные Юзера
-                        senderFile_Email: user_Email,
+            // ─────────────────────────────
+            // ожидание окончания Busboy
+            // ─────────────────────────────
+            await new Promise((resolve, reject) => {
+                busboy.on('finish', resolve);
+                busboy.on('error', reject);
+                req.pipe(busboy);
+            });
 
-                        // данные Владельца, родительских проектов и корп аккаунтов
-                        owner_Email: accessToWork_vs_files_data.data_fromMainServer.ownerData.owner_Email,
-                        owner_ID: accessToWork_vs_files_data.data_fromMainServer.ownerData.owner_ID,
+            // ждём окончания записи всех файлов на диск
+            await Promise.all(fileWritePromises);
 
-                        corpAccount_ID,
-                        project_ID,
+            console.log("fileWriteFinished= " + fileWriteFinished);
 
-                        // данные непосредственно файла
-                        file_ID,
-                        file_Name,
-                        endOfFileName,
-                        fileFullNameByID,
-                        file_Size,
-                    });
-
-                    postServise_answer.comment = "file was succesful uploaded";
-                    postServise_answer.mResStatus = 1;
-                    postServise_answer.projectFilesList =
-                        vars_and_functions___pr0003.usersFiles_Reestr[user_Email]?.corpAccounts[corpAccount_ID]?.projects[project_ID]?.files ??
-                        "Is no files in current project";
-
-                    vars_and_functions___pr0003.need_SaveData = true;
-
-                    // далее контроль свободного места на диске
-                    vars_and_functions___pr0003.controlAndMessages_aboutDiskSpace.controlOverflow_andInfoMessages();
-
-                    return postServise_answer;
-                } catch (error) {
-                    console.log(" ");
-                    console.log("Ошибка при добавлении файла в реестр файлов:");
-                    console.log(error);
-
-                    postServise_answer.comment = "error in create_newFileItem_inFilesReestr";
-                    postServise_answer.mResStatus = 0;
-                    return postServise_answer;
-                }
-            } catch (error) {
-                console.log(" ");
-                console.log("Ошибка при сохранении файла: ", error);
-
-                postServise_answer.comment = "error in save file to disk";
-                postServise_answer.mResStatus = 0;
+            if (!fileWriteFinished) {
+                postServise_answer.comment = "file not uploaded";
                 return postServise_answer;
             }
-        } catch (error) {
-            console.log(" ");
-            console.log("Ошибка записи файла в uploadOneFileToServer_PS: ", error);
 
-            postServise_answer.comment = "error in uploadOneFileToServer_PS";
-            postServise_answer.mResStatus = 0;
+            // ─────────────────────────────
+            // запись в реестр файлов
+            // ─────────────────────────────
+            vars_and_functions___pr0003.create_newFileItem_inFilesReestr({
+                senderFile_Email: postDataToServer.user_Email,
+                owner_Email: postDataToServer.owner_Email,
+                owner_ID: accessToWork_vs_files_data.data_fromMainServer.ownerData.owner_ID,
+
+                corpAccount_ID: postDataToServer.corpAccount_ID,
+                project_ID: postDataToServer.project_ID,
+                file_ID,
+                file_Name,
+                endOfFileName,
+                fileFullNameByID,
+                file_Size: real_file_Size,
+            });
+
+            vars_and_functions___pr0003.need_SaveData = true;
+            vars_and_functions___pr0003.controlAndMessages_aboutDiskSpace
+                .controlOverflow_andInfoMessages();
+
+            postServise_answer.comment = "file was succesful uploaded";
+            postServise_answer.mResStatus = 1;
+
+            return postServise_answer;
+
+        } catch (error) {
+            console.log("Ошибка uploadOneFileToServer_PS:", error);
+            postServise_answer.comment = error.message || "upload error";
             return postServise_answer;
         }
     },
@@ -809,15 +876,14 @@ export const postService_pr0003 = {
 
     //---------
 
-    // Новый вариант без лишних промисов от chat_GPT 04.11.2025
     async downloadOneFileFromServer_PS(req) {
 
-        // console.log(" ");
-        // console.log("Запуск downloadOneFileFromServer_PS, req.body= ");
-        // console.log(req.body);
+        console.log(" ");
+        console.log("Pfgecr downloadOneFileFromServer_PS, req.body= ");
+        console.log(req.body);
 
         let postServise_answer = {
-            mResStatus: 0,    // варианты кодов: 1 - успешно сохранено, 10, 11, 12 ...
+            mResStatus: 0,    // варианты кодов: 1 - успешно найдено
             comment: " ",
         };
 
@@ -828,16 +894,12 @@ export const postService_pr0003 = {
             });
 
             if (!accessToWork_vs_files_data) {
-                // console.log(" ");
-                // console.log("Отказано в доступе: ");
-                // console.log(accessToWork_vs_files_data?.comment);
-
                 postServise_answer.comment = "user has not access to project";
                 postServise_answer.mResStatus = 0;
                 return postServise_answer;
             }
 
-            // если проверки пройдены - отдаем путь к файлу на постКонтроллер
+            // формируем путь **как в твоем исходном коде** (исключительно из req.body)
             const filePath =
                 global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.get_valid_adress_fileOrFolder(
                     config_pr0003.usersDownloadFilesAdress + '/' +
@@ -847,24 +909,17 @@ export const postService_pr0003 = {
                     req.body.fileFullNameByID
                 );
 
-            // console.log(" ");
-            // console.log("filePath = ");
-            // console.log(filePath);
+            // проверяем, что файл реально существует
+            await fs.promises.access(filePath, fs.constants.F_OK);
 
-            // отдаем путь к файлу на постКонтроллер
             postServise_answer.mResStatus = 1;
             postServise_answer.filePath = filePath;
             postServise_answer.fileName = req.body.file_Name;
 
-            // console.log(" ");
-            // console.log("postServise_answer= ");
-            // console.log(postServise_answer);
-
             return postServise_answer;
 
         } catch (error) {
-            console.log(" ");
-            console.log("Ошибка в downloadOneFileFromServer_PS ");
+            console.log("Ошибка в downloadOneFileFromServer_PS");
             console.log(error);
 
             postServise_answer.comment = "Ошибка в downloadOneFileFromServer_PS";
@@ -872,7 +927,6 @@ export const postService_pr0003 = {
             return postServise_answer;
         }
     },
-
     //---------
 
     async delete_oneFileFromDisk_andFromReestr(
