@@ -55,6 +55,7 @@ mServer.use(cookieParser());
 mServer.use(fileUpload({}));
 
 // тут выводим в консоль поступающие запросы
+/* 
 mServer.use((req, res, next) => {
     // след условие - чтобы не дублировать дважды один запрос в Логах, потому что пост состоит из двух автоматических частей: браузер сначала отправляет preflight-запрос типа OPTIONS. После этого браузер отправляет уже основной POST/GET
     //    if (req.method === 'OPTIONS') {
@@ -65,7 +66,7 @@ mServer.use((req, res, next) => {
     console.log(`ПОСТУПИЛ ЗАПРОС на server_combi: ${req.method} ${req.path}`);
     return next();
 });
-
+ */
 
 mServer.use(cors({
     origin: [
@@ -77,7 +78,7 @@ mServer.use(cors({
     ],
     methods: ['GET', 'POST'],
     // ВАЖНО - указываем список разрешенных нестандартных заголовков, иначе они могут блокироваться при сложных постах, например с FormData
-    allowedHeaders: ['Content-Type', 'accesstoken', 'user_email_in_headers'],
+    allowedHeaders: ['Content-Type', 'accesstoken'],
     credentials: true, // след для разрешения отправки Куки - не используем
 }
 ));
