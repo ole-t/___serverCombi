@@ -3,65 +3,90 @@ import jwt_decode from 'jwt-decode';
 import { validationResult } from 'express-validator';
 import { postService_pr0003, vars_and_functions___pr0003 } from './postService_pr0003.js';
 import fs from 'fs';
+import { global_Functions_and_Servises_forAll_Projects } from '../global_Functions_and_Servises_forAll_Projects/global_Functions_and_Servises_forAll_Projects.js';
 
 export const postController_pr0003 = {
 
     async uploadOneFileToServer_PC(req, res) {
-        console.log("\nЗапуск uploadOneFileToServer_PC, req.headers =");
-        // console.log(" req.headers =");
-        // console.log(req.headers);
 
-        // Берём user_Email из accessToken в заголовке
+        // это нужно, чтобы только этот запрос мог снимать свою блокировку при закрытии запроса, а не параллельный запрос от юзера
+        const requestId = global_Functions_and_Servises_forAll_Projects.random_id();
+    
+        console.log("\nЗапуск uploadOneFileToServer_PC");
+    
         const user_Email = jwt_decode(req.headers.accesstoken).user_Email;
-
-        console.log("\n user_Email = " + user_Email);
-
+    
         if (!user_Email) {
-            console.log(" ");
-            console.log("Ошибка в uploadOneFileToServer_PC -Нет user_Email в заголовке");
             return res.status(400).json("Нет user_Email в заголовке");
         }
-
-        console.log("\n vars_and_functions___pr0003.tempBlockedReestr[user_Email] = " + vars_and_functions___pr0003.tempBlockedReestr[user_Email]);
-
-        // Слушаем закрытие соединения клиента
-        req.on('close', () => {
+    
+        console.log(
+            "\n tempBlockedReestr[user_Email] =",
+            vars_and_functions___pr0003.tempBlockedReestr[user_Email]
+        );
+    
+        // ===== 1. ПРОВЕРКА БЛОКИРОВКИ =====
+        if (vars_and_functions___pr0003.tempBlockedReestr[user_Email]) {
+            console.log("\n Прерываем попытку загрузки, пользователь выполняет другой процесс...");
+            return res.status(500).json("No access - Another files process");
+            // ❗ здесь НЕТ finally → блокировка НЕ меняется
+        }
+    
+        // ===== 2. УСТАНОВКА БЛОКИРОВКИ =====
+        vars_and_functions___pr0003.tempBlockedReestr[user_Email] = {
+            status: "uploading_OneFileToServer",
+            requestId
+        };
+    
+        console.log(
+            "\n После УСТАНОВКИ блокировки =",
+            vars_and_functions___pr0003.tempBlockedReestr[user_Email]
+        );
+    
+        let uploadFinished = false;
+    
+        // ===== 3. ОБРАБОТКА РАЗРЫВА СОЕДИНЕНИЯ =====
+        req.on("close", () => {
             console.log(`Клиент закрыл соединение: ${user_Email}`);
-            // Снимаем блокировку
-            vars_and_functions___pr0003.tempBlockedReestr[user_Email] = null;
-            // Можно добавить удаление временных файлов, если нужно
+    
+            const lock = vars_and_functions___pr0003.tempBlockedReestr[user_Email];
+    
+            if (lock && lock.requestId === requestId && !uploadFinished) {
+                vars_and_functions___pr0003.tempBlockedReestr[user_Email] = null;
+                console.log("Блокировка снята по close()");
+            }
         });
-
+    
         try {
-            // Проверяем, нет ли незавершённой загрузки
-            if (vars_and_functions___pr0003.tempBlockedReestr[user_Email]) {
-
-                console.log("\n Прерываем попытку загрузки, пользователь выполняет другой процесс...");
-
-                return res.status(500).json("No access - Another files process");
+            // ===== 4. ЗАГРУЗКА ФАЙЛА =====
+            const resultPostServise =
+                await postService_pr0003.uploadOneFileToServer_PS(req, user_Email);
+    
+            uploadFinished = true;
+    
+            // ===== 5. СНЯТИЕ БЛОКИРОВКИ ПОСЛЕ РЕАЛЬНОГО ОКОНЧАНИЯ =====
+            const lock = vars_and_functions___pr0003.tempBlockedReestr[user_Email];
+            if (lock && lock.requestId === requestId) {
+                vars_and_functions___pr0003.tempBlockedReestr[user_Email] = null;
+                console.log("Блокировка снята после успешной загрузки");
             }
-            vars_and_functions___pr0003.tempBlockedReestr[user_Email] = "uploading_OneFileToServer";
-
-            console.log("\n После УСТАНОВКИ блокировки tempBlockedReestr[user_Email] = " + vars_and_functions___pr0003.tempBlockedReestr[user_Email]);
-
-            // Запуск пост-сервиса (Busboy и загрузка файла)
-            const resultPostServise = await postService_pr0003.uploadOneFileToServer_PS(req, user_Email);
-
-            // Ответ клиенту
+    
             if (resultPostServise.mResStatus === 1) {
-                res.status(200).json(resultPostServise);
+                return res.status(200).json(resultPostServise);
             } else {
-                res.status(500).json(resultPostServise.comment);
+                return res.status(500).json(resultPostServise.comment);
             }
-
+    
         } catch (error) {
-            console.error("Ошибка из postController_pr0003 --- uploadOneFileToServer_PC:", error);
-            res.status(500).json("Ошибка из postController_pr0003 --- uploadOneFileToServer_PC");
-        } finally {
-            // Снимаем блокировку пользователя
-            vars_and_functions___pr0003.tempBlockedReestr[user_Email] = null;
-
-            console.log("\n После СНЯТИЯ блокировки tempBlockedReestr[user_Email] = " + vars_and_functions___pr0003.tempBlockedReestr[user_Email]);
+            console.error("Ошибка uploadOneFileToServer_PC:", error);
+    
+            const lock = vars_and_functions___pr0003.tempBlockedReestr[user_Email];
+            if (lock && lock.requestId === requestId) {
+                vars_and_functions___pr0003.tempBlockedReestr[user_Email] = null;
+                console.log("Блокировка снята по ошибке");
+            }
+    
+            return res.status(500).json("Ошибка загрузки файла");
         }
     },
 
