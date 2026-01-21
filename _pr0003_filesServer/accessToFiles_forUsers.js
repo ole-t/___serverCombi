@@ -8,9 +8,9 @@ export const accessToFiles_forUsers = {
 
     async access_toUploadFilesToServer_forUser(mArgObj) {
 
-        console.log(" ");
-        console.log("Запуск access_toUploadFilesToServer_forUser, mArgObj= ");
-        console.log(mArgObj);
+        // console.log(" ");
+        // console.log("Запуск access_toUploadFilesToServer_forUser, mArgObj= ");
+        // console.log(mArgObj);
 
 
         let return_data_currentFunction = {
@@ -238,9 +238,9 @@ export const accessToFiles_forUsers = {
     // Эта функция проверяет наличие допуска данного юзера к данному проекту и его файлам, запрашивает данные на главном сервере, и хеширует данные
     async get_userAccessData_toProjectFiles(mArgObj) {
 
-        console.log(" ");
-        console.log("--- ЗАПУСК get_userAccessData_toProjectFiles, mArgObj =  ");
-        console.log(mArgObj);
+        // console.log(" ");
+        // console.log("--- ЗАПУСК get_userAccessData_toProjectFiles, mArgObj =  ");
+        // console.log(mArgObj);
 
         let userAccessData_toProjectFiles = {};
 
