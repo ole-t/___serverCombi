@@ -521,9 +521,9 @@ export const postService_pr0003 = {
                             return reject(new Error(accessToWork_vs_files_data?.comment || "Access denied"));
                         }
 
-                        console.log(" ");
-                        console.log("accessToWork_vs_files_data =");
-                        console.log(accessToWork_vs_files_data);
+                        // console.log(" ");
+                        // console.log("accessToWork_vs_files_data =");
+                        // console.log(accessToWork_vs_files_data);
 
                         const owner_ID = accessToWork_vs_files_data.data_fromMainServer.ownerData.owner_ID;
 
