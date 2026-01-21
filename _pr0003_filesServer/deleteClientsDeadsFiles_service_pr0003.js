@@ -159,7 +159,7 @@ async function delete_all_files_ofCurrentCorpAcc(
             let owner_ID = vars_and_functions___pr0003.usersFiles_Reestr[parent_owner_Email].owner_ID;
 
             let pathDeleteCorpAccFolder = global_Functions_and_Servises_forAll_Projects.files_loadAndSave_service.get_valid_adress_fileOrFolder(
-                config_pr0003.usersDownloadFilesAdress + '/' + owner_ID + '/' + corpAccount_ID + '/' + project_ID
+                config_pr0003.usersDownloadFilesAdress + '/' + owner_ID + '/' + corpAccount_ID
             );
 
             // удаляем с диска вложенные файлы и папку корп Аккаунта
