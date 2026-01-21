@@ -90,7 +90,7 @@ mServer.use(cors({
     ],
     methods: ['GET', 'POST'],
     // ВАЖНО - указываем список разрешенных нестандартных заголовков, иначе они могут блокироваться при сложных постах, например с FormData
-    allowedHeaders: ['Content-Type', 'accesstoken'],
+    // allowedHeaders: ['Content-Type', 'accesstoken'],
     credentials: true, // след для разрешения отправки Куки - не используем
 }
 ));
