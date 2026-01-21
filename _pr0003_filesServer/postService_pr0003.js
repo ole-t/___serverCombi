@@ -134,9 +134,9 @@ export const vars_and_functions___pr0003 = {
 
     create_newFileItem_inFilesReestr: (mArgObj) => {
         try {
-            console.log(" ");
-            console.log("Запуск create_newFileItem_inFilesReestr, mArgObj=");
-            console.log(mArgObj);
+            // console.log(" ");
+            // console.log("Запуск create_newFileItem_inFilesReestr, mArgObj=");
+            // console.log(mArgObj);
 
             // проверяем размер файла на числовое значение
             if (typeof mArgObj.file_Size !== "number" || Number.isNaN(mArgObj.file_Size)) {
@@ -487,9 +487,8 @@ export const postService_pr0003 = {
                 if (fieldname === 'postDataToServer_Obj_stringify') {
                     try {
                         postDataToServer = JSON.parse(value);
-
-                        console.log("postDataToServer =");
-                        console.log(postDataToServer);
+                        // console.log("postDataToServer =");
+                        // console.log(postDataToServer);
                     } catch (e) {
                         throw new Error("Invalid JSON in postDataToServer_Obj_stringify");
                     }
