@@ -8,7 +8,8 @@ export const postController_pr0003 = {
 
     async uploadOneFileToServer_PC(req, res) {
         console.log("\nЗапуск uploadOneFileToServer_PC, req.headers =");
-        console.log(req.headers);
+        // console.log(" req.headers =");
+        // console.log(req.headers);
 
         // Берём user_Email из accessToken в заголовке
         const user_Email = jwt_decode(req.headers.accesstoken).user_Email;
