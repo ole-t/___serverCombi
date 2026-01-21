@@ -42,6 +42,8 @@ export const postController_pr0003 = {
             }
             vars_and_functions___pr0003.tempBlockedReestr[user_Email] = "uploading_OneFileToServer";
 
+            console.log("\n После УСТАНОВКИ блокировки tempBlockedReestr[user_Email] = " + vars_and_functions___pr0003.tempBlockedReestr[user_Email]);
+
             // Запуск пост-сервиса (Busboy и загрузка файла)
             const resultPostServise = await postService_pr0003.uploadOneFileToServer_PS(req, user_Email);
 
@@ -58,6 +60,8 @@ export const postController_pr0003 = {
         } finally {
             // Снимаем блокировку пользователя
             vars_and_functions___pr0003.tempBlockedReestr[user_Email] = null;
+
+            console.log("\n После СНЯТИЯ блокировки tempBlockedReestr[user_Email] = " + vars_and_functions___pr0003.tempBlockedReestr[user_Email]);
         }
     },
 
