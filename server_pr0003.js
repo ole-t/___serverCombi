@@ -73,15 +73,12 @@ mServer.use((req, res, next) => {
 });
 
 // тут выводим в консоль поступающие запросы (закомментировано, можно включить при отладке Только в режиме отладки
-/* 
-if (config_serverCombi.localDebugProcess) {
-    mServer.use((req, res, next) => {
-        console.log(" ");
-        console.log(`ПОСТУПИЛ ЗАПРОС на server_pr0003: ${req.method} ${req.path}`);
-        return next();
-    });
-}
- */
+
+mServer.use((req, res, next) => {
+    console.log(" ");
+    console.log(`ПОСТУПИЛ ЗАПРОС на server_pr0003: ${req.method} ${req.path}`);
+    return next();
+});
 
 mServer.use(cors({
     origin: [
