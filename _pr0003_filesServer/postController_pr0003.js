@@ -13,13 +13,15 @@ export const postController_pr0003 = {
         // Берём user_Email из accessToken в заголовке
         const user_Email = jwt_decode(req.headers.accesstoken).user_Email;
 
-        vars_and_functions___pr0003.sendTelegramInfo_from_pr0003("user_Email из accessToken в заголовке= " + user_Email, "yellow");
+        console.log("\n user_Email = " + user_Email);
 
         if (!user_Email) {
             console.log(" ");
             console.log("Ошибка в uploadOneFileToServer_PC -Нет user_Email в заголовке");
             return res.status(400).json("Нет user_Email в заголовке");
         }
+
+        console.log("\n vars_and_functions___pr0003.tempBlockedReestr[user_Email] = " + vars_and_functions___pr0003.tempBlockedReestr[user_Email]);
 
         // Слушаем закрытие соединения клиента
         req.on('close', () => {
@@ -32,6 +34,9 @@ export const postController_pr0003 = {
         try {
             // Проверяем, нет ли незавершённой загрузки
             if (vars_and_functions___pr0003.tempBlockedReestr[user_Email]) {
+
+                console.log("\n Прерываем попытку загрузки, пользователь выполняет другой процесс...");
+
                 return res.status(500).json("No access - Another files process");
             }
             vars_and_functions___pr0003.tempBlockedReestr[user_Email] = "uploading_OneFileToServer";
