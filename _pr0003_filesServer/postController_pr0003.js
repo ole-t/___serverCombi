@@ -7,33 +7,63 @@ import { global_Functions_and_Servises_forAll_Projects } from '../global_Functio
 
 export const postController_pr0003 = {
 
+    async preCheckUpload_PC(req, res) {
+        try {
+            console.log("\n Запуск preCheckUpload_PC ");
+            const user_Email = jwt_decode(req.headers.accesstoken).user_Email;
+            console.log("\n user_Email = " + user_Email);
+
+            if (!user_Email) {
+                console.log("Ошибка: Нет user_Email в заголовке");
+                return res.status(400).json("Нет user_Email в заголовке preCheckUpload_PC");
+            }
+
+            console.log("\n vars_and_functions___pr0003.tempBlockedReestr[user_Email] preCheckUpload_PC = " + vars_and_functions___pr0003.tempBlockedReestr[user_Email]);
+
+            // ===== ПРОВЕРКА БЛОКИРОВКИ =====
+            if (vars_and_functions___pr0003.tempBlockedReestr[user_Email]) {
+                console.log("\n Прерываем preCheckUpload_PC, пользователь выполняет другой процесс...");
+                return res.status(400).json("No access preCheckUpload_PC - Another files process");
+            }
+
+            // если проверки пройдены - возвращаем положительный ответ
+            return res.status(200).json("Access preCheckUpload_PC - ok");
+
+        } catch (error) {
+            console.error("Ошибка из preCheckUpload_PC:", error);
+            return res.status(500).json("Error from preCheckUpload_PC");
+        }
+    },
+
+    //---------
+
     async uploadOneFileToServer_PC(req, res) {
         console.log("\nЗапуск uploadOneFileToServer_PC");
-    
+
         const user_Email = jwt_decode(req.headers.accesstoken).user_Email;
         console.log("\n user_Email = " + user_Email);
-    
+
         if (!user_Email) {
             console.log("Ошибка: Нет user_Email в заголовке");
             return res.status(400).json("Нет user_Email в заголовке");
         }
-    
+
         console.log("\n vars_and_functions___pr0003.tempBlockedReestr[user_Email] = " +
             vars_and_functions___pr0003.tempBlockedReestr[user_Email]);
-    
+
         // ===== ПРОВЕРКА БЛОКИРОВКИ =====
         if (vars_and_functions___pr0003.tempBlockedReestr[user_Email]) {
             console.log("\n Прерываем попытку загрузки, пользователь выполняет другой процесс...");
             return res.status(500).json("No access - Another files process");
         }
-    
+
         // ===== УСТАНОВКА БЛОКИРОВКИ =====
         vars_and_functions___pr0003.tempBlockedReestr[user_Email] = "uploading_OneFileToServer";
         console.log("\n После УСТАНОВКИ блокировки tempBlockedReestr[user_Email] = " +
             vars_and_functions___pr0003.tempBlockedReestr[user_Email]);
-    
+
         let uploadFinished = false;
-    
+
         // ===== ОБРАБОТКА РАЗРЫВА СОЕДИНЕНИЯ =====
         req.on("close", () => {
             console.log(`Клиент закрыл соединение: ${user_Email}`);
@@ -42,31 +72,31 @@ export const postController_pr0003 = {
                 console.log("Блокировка снята по close()");
             }
         });
-    
+
         try {
             // ===== ЗАГРУЗКА ФАЙЛА =====
             const resultPostServise = await postService_pr0003.uploadOneFileToServer_PS(req, user_Email);
-    
+
             uploadFinished = true;
-    
+
             console.log("fileWriteFinished= true");
-    
+
             // ===== СНЯТИЕ БЛОКИРОВКИ ПОСЛЕ ЗАВЕРШЕНИЯ =====
             vars_and_functions___pr0003.tempBlockedReestr[user_Email] = null;
             console.log("\n После СНЯТИЯ блокировки tempBlockedReestr[user_Email] = " +
                 vars_and_functions___pr0003.tempBlockedReestr[user_Email]);
-    
+
             console.log("\nЗапуск controlOverflow_andInfoMessages");
             // Пример твоей логики контроля
             // _usedTotalSpaceForAllClientsFiles = ...
             // maxTotalSpaceInServerForFiles = ...
-    
+
             if (resultPostServise.mResStatus === 1) {
                 return res.status(200).json(resultPostServise);
             } else {
                 return res.status(500).json(resultPostServise.comment);
             }
-    
+
         } catch (error) {
             uploadFinished = true;
             vars_and_functions___pr0003.tempBlockedReestr[user_Email] = null;
@@ -100,7 +130,7 @@ export const postController_pr0003 = {
             console.log("Ошибка из postController_pr0003 --- getFilesListForCurrentProjectFromServer_PC: ");
             console.log(error);
             // console.log(" ");
-            res.status(500).json("Ошибка из postController_pr0003 --- getFilesListForCurrentProjectFromServer_PC: ");
+            res.status(500).json("Error postController_pr0003 --- getFilesListForCurrentProjectFromServer_PC: ");
         }
 
     },

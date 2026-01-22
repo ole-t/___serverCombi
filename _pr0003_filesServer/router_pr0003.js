@@ -38,6 +38,8 @@ router_pr0003.post(
     });
 
 // Загрузка/скачивание файлов:
+router_pr0003.post('/preCheckUpload', postController_pr0003.preCheckUpload_PC);
+
 router_pr0003.post('/uploadOneFileToServer', postController_pr0003.uploadOneFileToServer_PC);
 
 router_pr0003.post('/getFilesListForCurrentProjectFromServer', postController_pr0003.getFilesListForCurrentProjectFromServer_PC);
